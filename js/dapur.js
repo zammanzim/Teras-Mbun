@@ -100,7 +100,7 @@ const Dapur = (function () {
       <ul class="daftar-item">
         ${items.map((i) => `<li>• ${esc(i.nama || "Menu")} <b>${esc(i.qty || 1)}x</b></li>`).join("")}
       </ul>
-      ${p.catatan ? `<p style="color:var(--kuning);font-size:.85rem"><i class="fa-solid fa-comment-dots"></i> ${esc(p.catatan)}</p>` : ""}
+      ${p.catatan ? `<p class="catatan"><i class="fa-solid fa-comment-dots"></i> ${esc(p.catatan)}</p>` : ""}
       <p class="total">${rupiah(p.total)}</p>
       <div class="aksi">${aksi}</div>
     </div>`;

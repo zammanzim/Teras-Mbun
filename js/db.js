@@ -1,13 +1,18 @@
 // ============================================================
 // DB — layer Supabase TERAS MBUN (semua via skema terasmbun)
+// Client-nya disetel `db.schema = terasmbun` SEKALI di createClient,
+// jadi .from("menu") / .rpc("buat_pesanan") udah otomatis ke skema
+// terasmbun — JANGAN di-prefix "terasmbun." manual (malah nyari
+// tabel 'terasmbun.menu' di skema public → error).
 // Read menu/pesanan langsung; nulis lewat RPC (total dihitung
 // server-side, ubah status wajib PIN).
 // ============================================================
 const TmDb = (function () {
   "use strict";
 
-  const supa = supabase.createClient(TM_SUPABASE_URL, TM_SUPABASE_ANON_KEY);
-  const T = TM_SCHEMA + "."; // prefix tabel
+  const supa = supabase.createClient(TM_SUPABASE_URL, TM_SUPABASE_ANON_KEY, {
+    db: { schema: TM_SCHEMA }, // semua query ke skema terasmbun
+  });
 
   // pesan error ramah dari RPC
   function pesanRamah(err) {
@@ -26,15 +31,15 @@ const TmDb = (function () {
     // ── baca ──
     async muatMenu() {
       const { data, error } = await supa
-        .from(T + "menu")
-        .select("id,nama,harga,kategori,urutan")
+        .from("menu")
+        .select("id,nama,harga,kategori,urutan,gambar,deskripsi")
         .order("urutan", { ascending: true });
       if (error) throw error;
       return data || [];
     },
 
     async muatPesanan(hariIni) {
-      let q = supa.from(T + "pesanan").select("*").order("created_at", { ascending: false }).limit(100);
+      let q = supa.from("pesanan").select("*").order("created_at", { ascending: false }).limit(100);
       if (hariIni) q = q.gte("created_at", new Date().toISOString().slice(0, 10));
       const { data, error } = await q;
       if (error) throw error;
@@ -43,7 +48,7 @@ const TmDb = (function () {
 
     async cariPesanan(kode) {
       const { data, error } = await supa
-        .from(T + "pesanan")
+        .from("pesanan")
         .select("*")
         .eq("kode", String(kode || "").trim())
         .maybeSingle();
@@ -52,7 +57,7 @@ const TmDb = (function () {
     },
 
     async infoWarung() {
-      const { data, error } = await supa.rpc(T + "info_warung");
+      const { data, error } = await supa.rpc("info_warung");
       if (error) throw error;
       return data || { wa_penjual: "" };
     },
@@ -60,7 +65,7 @@ const TmDb = (function () {
     // ── nulis (RPC, wajib validasi server-side) ──
     // items: [{id, qty}] — total dihitung ulang oleh Postgres
     async kirimPesanan({ nama, wa, catatan, items }) {
-      const { data, error } = await supa.rpc(T + "buat_pesanan", {
+      const { data, error } = await supa.rpc("buat_pesanan", {
         p_nama: nama || "",
         p_wa: wa || "",
         p_catatan: catatan || "",
@@ -71,13 +76,13 @@ const TmDb = (function () {
     },
 
     async cekPin(pin) {
-      const { data, error } = await supa.rpc(T + "cek_pin", { p_pin: String(pin || "") });
+      const { data, error } = await supa.rpc("cek_pin", { p_pin: String(pin || "") });
       if (error) throw error;
       return !!data;
     },
 
     async ubahStatus(id, status, pin) {
-      const { data, error } = await supa.rpc(T + "ubah_status", {
+      const { data, error } = await supa.rpc("ubah_status", {
         p_id: id, p_status: status, p_pin: String(pin || ""),
       });
       if (error) throw error;

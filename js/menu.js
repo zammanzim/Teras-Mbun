@@ -7,7 +7,6 @@ const Menu = (function () {
   "use strict";
 
   let daftar = [];          // isi tabel menu
-  let kategoriAktif = "semua";
   let waPenjual = "";       // dari setting DB (tombol share WA)
 
   // ── keranjang (localStorage, awet kalau ke-refresh) ──
@@ -44,30 +43,60 @@ const Menu = (function () {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // ── render ──
-  function renderChips() {
-    const kats = ["semua", ...new Set(daftar.map((m) => m.kategori))];
-    document.getElementById("chips").innerHTML = kats.map((k) =>
-      `<button class="chip ${k === kategoriAktif ? "aktif" : ""}" data-kat="${esc(k)}">${esc(k === "semua" ? "Semua" : k)}</button>`
-    ).join("");
+  // showcase: kartu (nama, harga, deskripsi) + foto di bawahnya
+  function renderTampil() {
+    const box = document.getElementById("menuTampil");
+    if (!daftar.length) {
+      box.innerHTML = '<p class="kosong">Belum ada menu nih.</p>';
+      return;
+    }
+    box.innerHTML = daftar.map((m, ix) => {
+      const adaFoto = !!m.gambar;
+      return `<div class="tampil-blok" style="animation-delay:${ix * 40}ms">
+        <div class="tampil-info">
+          <span class="kat">${esc(m.kategori)}</span>
+          <div class="baris-atas">
+            <span class="nama">${esc(m.nama)}</span>
+            <span class="harga">${rupiah(m.harga)}</span>
+          </div>
+          ${m.deskripsi ? `<p class="deskripsi">${esc(m.deskripsi)}</p>` : ""}
+        </div>
+        <div class="tampil-foto ${adaFoto ? "" : "kosong-foto"}">
+          ${adaFoto
+            ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
+                    onerror="this.closest('.tampil-foto').classList.add('kosong-foto'); this.remove();">`
+            : ""}
+          <span class="foto-emoji">${emojiKategori(m.kategori)}</span>
+        </div>
+      </div>`;
+    }).join("");
   }
 
+  // emoji placeholder kalo foto menu belum ada
+  function emojiKategori(kat) {
+    const peta = { nasi: "🍚", minuman: "🥤", lauk: "🍗", lauk_pauk: "🍗", snack: "🍘" };
+    return peta[String(kat || "").toLowerCase()] || "🍽️";
+  }
+
+  // pesenan: daftar polos — nama + harga + tombol +/−
   function renderMenu() {
     const grid = document.getElementById("gridMenu");
-    const tampil = daftar.filter((m) => kategoriAktif === "semua" || m.kategori === kategoriAktif);
-    if (!tampil.length) {
+    if (!daftar.length) {
       grid.innerHTML = '<p class="kosong">Belum ada menu nih.</p>';
       return;
     }
-    grid.innerHTML = tampil.map((m, ix) => {
+    // daftar polos: nama + harga + tombol +/−, tanpa judul/chips/foto
+    grid.innerHTML = daftar.map((m, ix) => {
       const k = Keranjang.ada(m.id);
-      return `<div class="kartu" style="animation-delay:${ix * 40}ms">
-        <span class="kat">${esc(m.kategori)}</span>
-        <span class="nama">${esc(m.nama)}</span>
-        <span class="harga">${rupiah(m.harga)}</span>
+      return `<div class="menu-baris" style="animation-delay:${ix * 30}ms">
+        <div class="info">
+          <span class="nama">${esc(m.nama)}</span>
+          <span class="harga">${rupiah(m.harga)}</span>
+        </div>
         <div class="aksi">
-          <button class="qty-btn" data-kurang="${m.id}" ${k ? "" : "disabled"}>−</button>
+          <button class="qty-btn" data-kurang="${m.id}" ${k ? "" : "disabled"} aria-label="Kurangi ${esc(m.nama)}">−</button>
           <span class="qty-num">${k ? k.qty : 0}</span>
-          <button class="qty-btn" data-tambah="${m.id}">+</button>
+          <button class="qty-btn" data-tambah="${m.id}" aria-label="Tambah ${esc(m.nama)}">+</button>
         </div>
       </div>`;
     }).join("");
@@ -81,7 +110,7 @@ const Menu = (function () {
     document.getElementById("barTotal").textContent = rupiah(Keranjang.total());
   }
 
-  function renderSemua() { renderMenu(); renderBar(); }
+  function renderSemua() { renderTampil(); renderMenu(); renderBar(); }
 
   // ── alur pesen ──
   async function alurPesan() {
@@ -161,20 +190,67 @@ const Menu = (function () {
       </ul>`;
   }
 
+  // ── daftar section di dropdown titik tiga ──
+  // Nambah section baru: tambah entri di sini + bikin <section id="..."> di index.html
+  const NAV_SECTIONS = [
+    { id: "greeting", label: "Beranda", icon: "fa-house" },
+    { id: "daftar", label: "Lihat Menu", icon: "fa-utensils" },
+    { id: "menu", label: "Pesan", icon: "fa-cart-shopping" },
+    { id: "cekStatus", label: "Cek Status Pesenan", icon: "fa-magnifying-glass" },
+  ];
+
+  function pasangDropdown() {
+    const btn = document.getElementById("btnNavMenu");
+    const panel = document.getElementById("navPanel");
+    if (!btn || !panel) return;
+
+    // render link dari NAV_SECTIONS
+    panel.innerHTML = NAV_SECTIONS
+      .map((s) => `<a href="#${esc(s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`)
+      .join("");
+
+    const tutup = () => {
+      panel.hidden = true;
+      btn.setAttribute("aria-expanded", "false");
+    };
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const buka = panel.hidden;
+      panel.hidden = !buka;
+      btn.setAttribute("aria-expanded", String(buka));
+    });
+
+    // klik link → smooth scroll + tutup panel
+    panel.addEventListener("click", (e) => {
+      const a = e.target.closest("a");
+      if (!a) return;
+      e.preventDefault();
+      const href = a.getAttribute("href");
+      if (href === "#greeting") {
+        // Beranda: scroll ke paling atas beneran (0px).
+        // scrollIntoView#greeting mentok di bawah header karena header ikut alur dokumen.
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        const el = document.querySelector(href);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      tutup();
+    });
+
+    // klik di luar / ESC → tutup
+    document.addEventListener("click", (e) => {
+      if (!panel.hidden && !e.target.closest("#navDropdown")) tutup();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") tutup();
+    });
+  }
+
   // ── init ──
   async function mulai() {
     Keranjang.muat();
-    renderChips();
     renderSemua();
-
-    // klik chip kategori
-    document.getElementById("chips").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-kat]");
-      if (!b) return;
-      kategoriAktif = b.dataset.kat;
-      renderChips();
-      renderMenu();
-    });
 
     // klik +/- menu
     document.getElementById("gridMenu").addEventListener("click", (e) => {
@@ -190,6 +266,20 @@ const Menu = (function () {
     });
 
     document.getElementById("btnPesan").addEventListener("click", alurPesan);
+
+    // dropdown navigasi titik tiga
+    pasangDropdown();
+
+    // tombol di greeting: lompat ke menu / ke cek status
+    document.getElementById("btnPesanSekarang").addEventListener("click", () => {
+      document.getElementById("daftar").scrollIntoView({ behavior: "smooth" });
+    });
+    document.getElementById("btnLihatStatus").addEventListener("click", () => {
+      const el = document.getElementById("cekStatus");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => document.getElementById("inputKode").focus(), 500);
+    });
+
     document.getElementById("btnCek").addEventListener("click", () => cekStatus(document.getElementById("inputKode").value));
     document.getElementById("inputKode").addEventListener("keydown", (e) => {
       if (e.key === "Enter") cekStatus(e.target.value);
@@ -198,7 +288,6 @@ const Menu = (function () {
     // muat menu + info warung (nomor WA penjual)
     try {
       daftar = await TmDb.muatMenu();
-      renderChips();
       renderSemua();
     } catch (err) {
       document.getElementById("gridMenu").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
