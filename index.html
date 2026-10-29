@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teras Mbun — Pesen Enak, Tanpa Ribet</title>
+  <meta name="description" content="Pesen makanan Teras Mbun lewat web. Pilih menu, kirim pesenan, tinggal nunggu siap.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2619">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
+        <span>TERAS MBUN<small>PESAN DI SINI, GAK PAKE ANTRI WA</small></span>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="banner">
+      <h1>Mau pesen apa hari ini? 👋</h1>
+      <p>Pilih menu, isi nama, kirim. Pesenanmu langsung masuk ke dapur.</p>
+    </section>
+
+    <nav class="chips" id="chips"></nav>
+    <section class="grid" id="gridMenu">
+      <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
+    </section>
+
+    <section class="cek-status" id="cekStatus">
+      <h2><i class="fa-solid fa-magnifying-glass"></i> Cek status pesenan</h2>
+      <div class="row-input">
+        <input type="text" id="inputKode" placeholder="Kode pesenan, mis. 001" autocomplete="off">
+        <button class="btn btn-hijau" id="btnCek">Cek</button>
+      </div>
+      <div class="hasil-status" id="hasilStatus"></div>
+    </section>
+  </main>
+
+  <div class="bar-bawah" id="barBawah" hidden>
+    <div class="inner">
+      <div class="total">
+        <small id="barJml">0 item</small>
+        <b id="barTotal">Rp0</b>
+      </div>
+      <button class="btn btn-hijau" id="btnPesan">Kirim Pesenan <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/notice.js"></script>
+  <script src="js/show-popup.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/menu.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+  </script>
+</body>
+</html>
