@@ -42,7 +42,7 @@
       <h1 class="greet-judul">Teras <em>Mbun</em></h1>
       <p class="greet-sub">Pesen enak tanpa ribet. Pilih menu, kirim, tunggu siap — gak usah antri di WA.</p>
       <div class="greet-aksi">
-        <button class="btn btn-besar" id="btnPesanSekarang">Pesan Sekarang <i class="fa-solid fa-arrow-down"></i></button>
+        <a class="btn btn-besar" href="pesen.html">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></a>
         <button class="btn btn-kaca" id="btnLihatStatus">Cek Status</button>
       </div>
       <span class="greet-scroll"><i class="fa-solid fa-chevron-down"></i> scroll buat liat menu</span>
@@ -57,12 +57,7 @@
       </div>
     </section>
 
-    <!-- ===== SECTION 2: pesenan (daftar polos + tombol +/−) ===== -->
-    <section class="seksi" id="menu">
-      <div class="grid" id="gridMenu">
-        <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
-      </div>
-    </section>
+    <!-- ===== SECTION 2: pesenan pindah ke pesen.html ===== -->
 
     <!-- ===== Cek status ===== -->
     <section class="cek-status" id="cekStatus">
@@ -74,16 +69,6 @@
       <div class="hasil-status" id="hasilStatus"></div>
     </section>
   </main>
-
-  <div class="bar-bawah" id="barBawah" hidden>
-    <div class="inner">
-      <div class="total">
-        <small id="barJml">0 item</small>
-        <b id="barTotal">Rp0</b>
-      </div>
-      <button class="btn btn-hijau" id="btnPesan">Kirim Pesenan <i class="fa-solid fa-arrow-right"></i></button>
-    </div>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>

@@ -3,10 +3,11 @@
 // Cache-first buat aset statis; Supabase selalu network.
 // Ingat: tiap ubah file yang di-precache, BUMP versi cache di bawah.
 // ============================================================
-const CACHE = "terasmbun-v11";
+const CACHE = "terasmbun-v21";
 const PRECACHE = [
   "./",
   "index.html",
+  "pesen.html",
   "dapur.html",
   "css/style.css",
   "js/config.js",
@@ -15,6 +16,7 @@ const PRECACHE = [
   "js/notice.js",
   "js/show-popup.js",
   "js/menu.js",
+  "js/pesen.js",
   "js/dapur.js",
   "manifest.webmanifest",
 ];

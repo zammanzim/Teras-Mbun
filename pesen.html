@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesan — Teras Mbun</title>
+  <meta name="description" content="Form pemesanan Teras Mbun. Pilih menu, isi data, kirim — beres.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2a1810">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
+        <span class="nama">Teras Mbun<small>FORM PESENAN</small></span>
+      </a>
+      <div class="top-right">
+        <a class="btn btn-kecil btn-kaca" href="index.html"><i class="fa-solid fa-house"></i> Beranda</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="judul-pesen">Pesan <em>enak</em>, tanpa ribet 🍜</h1>
+
+    <form id="formPesen" novalidate>
+      <!-- 1. Pilih menu -->
+      <fieldset class="kartu-form">
+        <legend><span class="no">1</span> Pilih menu</legend>
+        <div class="grid" id="gridPilih">
+          <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
+        </div>
+      </fieldset>
+
+      <!-- 2. Level pedas (muncul cuma kalo ada makanan yang dipilih) -->
+      <fieldset class="kartu-form" id="langkahLevel" hidden>
+        <legend><span class="no">2</span> Level pedas 🌶️</legend>
+        <p class="bantuan">Buat makanan yang lo pilih. Minuman gak ngaruh.</p>
+        <div class="opsi-grid" id="opsiLevel"></div>
+      </fieldset>
+
+      <!-- 3. Data kamu -->
+      <fieldset class="kartu-form">
+        <legend><span class="no">3</span> Data kamu</legend>
+        <label class="field">
+          <span>Nama *</span>
+          <input type="text" id="inNama" placeholder="mis. Budi" autocomplete="name" maxlength="60">
+        </label>
+        <label class="field">
+          <span>No. WA *</span>
+          <input type="tel" id="inWa" placeholder="08xxxxxxxxxx" autocomplete="tel" inputmode="tel" maxlength="20">
+        </label>
+      </fieldset>
+
+      <!-- 4. Cara terima -->
+      <fieldset class="kartu-form">
+        <legend><span class="no">4</span> Mau diantar atau ambil sendiri?</legend>
+        <div class="opsi-grid" id="opsiAmbil">
+          <label class="opsi">
+            <input type="radio" name="ambil" value="cod">
+            <i class="fa-solid fa-motorcycle"></i>
+            <b>Diantar (COD)</b>
+            <small>dianterin ke rumah</small>
+          </label>
+          <label class="opsi">
+            <input type="radio" name="ambil" value="ambil">
+            <i class="fa-solid fa-store"></i>
+            <b>Ambil di toko</b>
+            <small>nyamperin ke Teras Mbun</small>
+          </label>
+        </div>
+        <label class="field" id="fieldAlamat" hidden>
+          <span>Alamat buat diantar *</span>
+          <textarea id="inAlamat" rows="3" placeholder="Jl., nomor rumah, patokan…" maxlength="300"></textarea>
+        </label>
+      </fieldset>
+
+      <!-- 5. Bayar -->
+      <fieldset class="kartu-form">
+        <legend><span class="no">5</span> Bayar pakai apa?</legend>
+        <div class="opsi-grid" id="opsiBayar">
+          <label class="opsi">
+            <input type="radio" name="bayar" value="qris">
+            <i class="fa-solid fa-qrcode"></i>
+            <b>QRIS</b>
+            <small>scan aja</small>
+          </label>
+          <label class="opsi">
+            <input type="radio" name="bayar" value="tunai">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            <b>Tunai</b>
+            <small>bayar pas ambil</small>
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- Ringkasan -->
+      <div class="ringkas" id="ringkas">
+        <p class="kosong">Belum ada menu yang dipilih.</p>
+      </div>
+    </form>
+  </main>
+
+  <!-- Bar kirim: total + tombol -->
+  <div class="bar-bawah" id="barKirim">
+    <div class="inner">
+      <div class="total">
+        <small id="barJml">0 item</small>
+        <b id="barTotal">Rp0</b>
+      </div>
+      <button class="btn btn-hijau" id="btnKirim" form="formPesen" type="submit">
+        Kirim Pesenan <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/notice.js"></script>
+  <script src="js/show-popup.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/pesen.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+  </script>
+</body>
+</html>

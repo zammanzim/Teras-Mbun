@@ -82,6 +82,17 @@ const Dapur = (function () {
 
   function kartu(p, ix) {
     const items = Array.isArray(p.items) ? p.items : [];
+    // info tambahan dari form pesen.html (kalo data lama, gak tampil)
+    const lvl = p.level_pedas > 0
+      ? `<p class="catatan"><i class="fa-solid fa-pepper-hot"></i> Pedes <b>Level ${esc(p.level_pedas)}</b></p>` : "";
+    const ambil = p.metode_ambil === "cod"
+      ? `<span class="tag-info"><i class="fa-solid fa-motorcycle"></i> COD</span>`
+      : p.metode_ambil === "ambil"
+        ? `<span class="tag-info"><i class="fa-solid fa-store"></i> Ambil di toko</span>` : "";
+    const bayar = p.metode_bayar
+      ? `<span class="tag-info ${p.metode_bayar === "qris" ? "tag-qris" : ""}"><i class="fa-solid ${p.metode_bayar === "qris" ? "fa-qrcode" : "fa-money-bill-wave"}"></i> ${p.metode_bayar === "qris" ? "QRIS" : "Tunai"}</span>` : "";
+    const alamat = p.metode_ambil === "cod" && p.alamat
+      ? `<p class="catatan"><i class="fa-solid fa-location-dot"></i> ${esc(p.alamat)}</p>` : "";
     // tombol aksi sesuai status
     let aksi = "";
     if (p.status === "menunggu") {
@@ -100,7 +111,10 @@ const Dapur = (function () {
       <ul class="daftar-item">
         ${items.map((i) => `<li>• ${esc(i.nama || "Menu")} <b>${esc(i.qty || 1)}x</b></li>`).join("")}
       </ul>
+      ${lvl}
+      ${alamat}
       ${p.catatan ? `<p class="catatan"><i class="fa-solid fa-comment-dots"></i> ${esc(p.catatan)}</p>` : ""}
+      <div class="tag-wrap">${ambil}${bayar}</div>
       <p class="total">${rupiah(p.total)}</p>
       <div class="aksi">${aksi}</div>
     </div>`;
@@ -130,7 +144,12 @@ const Dapur = (function () {
     const baris = pesanan.map((p, ix) => {
       const items = (Array.isArray(p.items) ? p.items : [])
         .map((i) => `${i.nama} ${i.qty}x`).join(", ");
-      return `${ix + 1}. #${p.kode} ${p.nama} — ${items} (${rupiah(p.total)}) [${p.status}]`;
+      const extra = [
+        p.metode_ambil === "cod" ? "COD" : p.metode_ambil === "ambil" ? "Ambil" : "",
+        p.metode_bayar ? p.metode_bayar.toUpperCase() : "",
+        p.level_pedas > 0 ? `Lv${p.level_pedas}` : "",
+      ].filter(Boolean).join(" · ");
+      return `${ix + 1}. #${p.kode} ${p.nama} — ${items} (${rupiah(p.total)}) [${p.status}]${extra ? ` {${extra}}` : ""}`;
     });
     const teks = `*PESenan TERAS MBUN*\n${hariIniSaja ? "Hari ini" : "Semua"}:\n\n` +
       baris.join("\n") + `\n\nTotal: ${rupiah(pesanan.reduce((s, p) => s + p.total, 0))}`;

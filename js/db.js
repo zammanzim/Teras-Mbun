@@ -18,8 +18,11 @@ const TmDb = (function () {
   function pesanRamah(err) {
     const m = String((err && err.message) || "");
     if (m.includes("nama_kosong")) return "Isi nama dulu ya.";
-    if (m.includes("keranjang_kosong")) return "Keranjang masih kosong.";
+    if (m.includes("keranjang_kosong")) return "Belum ada menu yang dipilih.";
     if (m.includes("menu_tidak_tersedia")) return "Ada menu yang lagi gak tersedia.";
+    if (m.includes("ambil_kosong")) return "Pilih mau diantar atau ambil sendiri.";
+    if (m.includes("alamat_kosong")) return "Isi alamatnya dulu (buat pesenan diantar).";
+    if (m.includes("bayar_kosong")) return "Pilih mau bayar QRIS atau tunai.";
     if (m.includes("Failed to fetch")) return "Koneksi lagi mati. Coba lagi nanti.";
     return m ? "Gagal: " + m : "Ada yang salah nih.";
   }
@@ -64,12 +67,18 @@ const TmDb = (function () {
 
     // ── nulis (RPC, wajib validasi server-side) ──
     // items: [{id, qty}] — total dihitung ulang oleh Postgres
-    async kirimPesanan({ nama, wa, catatan, items }) {
+    // ambil: "cod" (diantar) | "ambil" (nyamperin ke toko)
+    // bayar: "qris" | "tunai" — alamat wajib kalo ambil = "cod"
+    async kirimPesanan({ nama, wa, catatan, items, level, ambil, alamat, bayar }) {
       const { data, error } = await supa.rpc("buat_pesanan", {
         p_nama: nama || "",
         p_wa: wa || "",
         p_catatan: catatan || "",
         p_items: items,
+        p_level_pedas: Number(level || 0),
+        p_ambil: ambil || "",
+        p_alamat: alamat || "",
+        p_bayar: bayar || "",
       });
       if (error) throw error;
       return data; // {id, kode, total}

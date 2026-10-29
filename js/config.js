@@ -10,5 +10,4 @@ const TM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 const TM_SCHEMA = "terasmbun";
 
 // Kunci storage
-const TM_KERANJANG_KEY = "tm_keranjang";   // keranjang customer (localStorage)
 const TM_PIN_KEY = "tm_pin";               // PIN dapur sesudah verifikasi (sessionStorage)

@@ -1,41 +1,12 @@
 // ============================================================
-// menu.js — sisi CUSTOMER: lihat menu, keranjang, kirim pesenan,
-// cek status pakai kode. Tanpa login.
+// menu.js — sisi CUSTOMER (index): showcase menu + cek status
+// pakai kode. Pesenan PINDAH ke pesen.html (js/pesen.js).
 // ============================================================
 
 const Menu = (function () {
   "use strict";
 
   let daftar = [];          // isi tabel menu
-  let waPenjual = "";       // dari setting DB (tombol share WA)
-
-  // ── keranjang (localStorage, awet kalau ke-refresh) ──
-  const Keranjang = {
-    items: [], // [{id, nama, harga, qty}]
-
-    muat() {
-      try { this.items = JSON.parse(localStorage.getItem(TM_KERANJANG_KEY)) || []; }
-      catch (e) { this.items = []; }
-    },
-    simpan() { localStorage.setItem(TM_KERANJANG_KEY, JSON.stringify(this.items)); },
-    jumlah() { return this.items.reduce((s, i) => s + i.qty, 0); },
-    total() { return this.items.reduce((s, i) => s + i.qty * i.harga, 0); },
-    ada(id) { return this.items.find((i) => i.id === id); },
-    tambah(m) {
-      const k = this.ada(m.id);
-      if (k) k.qty = Math.min(50, k.qty + 1);
-      else this.items.push({ id: m.id, nama: m.nama, harga: m.harga, qty: 1 });
-      this.simpan();
-    },
-    kurang(id) {
-      const k = this.ada(id);
-      if (!k) return;
-      k.qty -= 1;
-      if (k.qty <= 0) this.items = this.items.filter((i) => i.id !== id);
-      this.simpan();
-    },
-    kosongkan() { this.items = []; this.simpan(); },
-  };
 
   // ── util ──
   const rupiah = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
@@ -43,120 +14,69 @@ const Menu = (function () {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // ── render ──
-  // showcase: kartu (nama, harga, deskripsi) + foto di bawahnya
+  // grouping: menu dikelompokin per kategori — maks 3 tampil,
+  // sisanya lewat tombol "▼ liat menu lain" di bawah grup
+  const MAKS_TAMPIL = 3;
+  const bukaTampil = new Set(); // kategori showcase yang lagi dibuka
+
+  function kelompokkan() {
+    const peta = new Map();
+    daftar.forEach((m) => {
+      const k = m.kategori || "lain";
+      if (!peta.has(k)) peta.set(k, []);
+      peta.get(k).push(m);
+    });
+    return [...peta.entries()].map(([kat, items]) => ({ kat, items }));
+  }
+
+  const labelKat = (k) => String(k || "lain").replace(/_/g, " ");
+
+  // tombol "liat menu lain" (muncul kalo kategori lebih dari MAKS_TAMPIL)
+  const tombolLain = (sisa) => `
+    <button class="btn-lain" type="button" data-buka>
+      <span class="lbl-buka"><i class="fa-solid fa-arrow-down"></i> Lihat menu lain (${sisa} lagi)</span>
+      <span class="lbl-tutup"><i class="fa-solid fa-arrow-up"></i> Sembunyikan</span>
+    </button>`;
+
+  // showcase: foto di atas, judul+deskripsi di bawahnya — per kategori
   function renderTampil() {
     const box = document.getElementById("menuTampil");
     if (!daftar.length) {
       box.innerHTML = '<p class="kosong">Belum ada menu nih.</p>';
       return;
     }
-    box.innerHTML = daftar.map((m, ix) => {
-      const adaFoto = !!m.gambar;
-      return `<div class="tampil-blok" style="animation-delay:${ix * 40}ms">
-        <div class="tampil-info">
-          <span class="kat">${esc(m.kategori)}</span>
-          <div class="baris-atas">
-            <span class="nama">${esc(m.nama)}</span>
-            <span class="harga">${rupiah(m.harga)}</span>
-          </div>
-          ${m.deskripsi ? `<p class="deskripsi">${esc(m.deskripsi)}</p>` : ""}
+    box.innerHTML = kelompokkan().map((g) => `
+      <div class="menu-grup ${bukaTampil.has(g.kat) ? "buka" : ""}" data-kat="${esc(g.kat)}">
+        <div class="kat-judul"><span class="ikon">${emojiKategori(g.kat)}</span><span class="label">${esc(labelKat(g.kat))}</span></div>
+        ${g.items.map((m, ix) => blokTampil(m, ix)).join("")}
+        ${g.items.length > MAKS_TAMPIL ? tombolLain(g.items.length - MAKS_TAMPIL) : ""}
+      </div>`).join("");
+  }
+
+  function blokTampil(m, ix) {
+    const adaFoto = !!m.gambar;
+    return `<div class="tampil-blok${ix >= MAKS_TAMPIL ? " lebih" : ""}" style="animation-delay:${ix * 40}ms">
+      <div class="tampil-foto ${adaFoto ? "" : "kosong-foto"}">
+        ${adaFoto
+          ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
+                  onerror="this.closest('.tampil-foto').classList.add('kosong-foto'); this.remove();">`
+          : ""}
+        <span class="foto-emoji">${emojiKategori(m.kategori)}</span>
+      </div>
+      <div class="tampil-info">
+        <div class="baris-atas">
+          <span class="nama">${esc(m.nama)}</span>
+          <span class="harga">${rupiah(m.harga)}</span>
         </div>
-        <div class="tampil-foto ${adaFoto ? "" : "kosong-foto"}">
-          ${adaFoto
-            ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
-                    onerror="this.closest('.tampil-foto').classList.add('kosong-foto'); this.remove();">`
-            : ""}
-          <span class="foto-emoji">${emojiKategori(m.kategori)}</span>
-        </div>
-      </div>`;
-    }).join("");
+        ${m.deskripsi ? `<p class="deskripsi">${esc(m.deskripsi)}</p>` : ""}
+      </div>
+    </div>`;
   }
 
   // emoji placeholder kalo foto menu belum ada
   function emojiKategori(kat) {
     const peta = { nasi: "🍚", minuman: "🥤", lauk: "🍗", lauk_pauk: "🍗", snack: "🍘" };
     return peta[String(kat || "").toLowerCase()] || "🍽️";
-  }
-
-  // pesenan: daftar polos — nama + harga + tombol +/−
-  function renderMenu() {
-    const grid = document.getElementById("gridMenu");
-    if (!daftar.length) {
-      grid.innerHTML = '<p class="kosong">Belum ada menu nih.</p>';
-      return;
-    }
-    // daftar polos: nama + harga + tombol +/−, tanpa judul/chips/foto
-    grid.innerHTML = daftar.map((m, ix) => {
-      const k = Keranjang.ada(m.id);
-      return `<div class="menu-baris" style="animation-delay:${ix * 30}ms">
-        <div class="info">
-          <span class="nama">${esc(m.nama)}</span>
-          <span class="harga">${rupiah(m.harga)}</span>
-        </div>
-        <div class="aksi">
-          <button class="qty-btn" data-kurang="${m.id}" ${k ? "" : "disabled"} aria-label="Kurangi ${esc(m.nama)}">−</button>
-          <span class="qty-num">${k ? k.qty : 0}</span>
-          <button class="qty-btn" data-tambah="${m.id}" aria-label="Tambah ${esc(m.nama)}">+</button>
-        </div>
-      </div>`;
-    }).join("");
-  }
-
-  function renderBar() {
-    const bar = document.getElementById("barBawah");
-    const jml = Keranjang.jumlah();
-    bar.hidden = jml === 0;
-    document.getElementById("barJml").textContent = jml + " item";
-    document.getElementById("barTotal").textContent = rupiah(Keranjang.total());
-  }
-
-  function renderSemua() { renderTampil(); renderMenu(); renderBar(); }
-
-  // ── alur pesen ──
-  async function alurPesan() {
-    if (!Keranjang.jumlah()) { showToast("Keranjang masih kosong.", "info"); return; }
-
-    const isi = await showPopup("Data pemesan", "form", {
-      title: " Data Pesenan",
-      fields: [
-        { name: "nama", label: "Nama kamu *", type: "text", placeholder: "mis. Budi" },
-        { name: "wa", label: "No. WA (opsional, buat dikabarin)", type: "tel", placeholder: "08xxxxxxxxxx" },
-        { name: "catatan", label: "Catatan (opsional)", type: "textarea", placeholder: "mis. gak pedas, sambel dipisah" },
-      ],
-    });
-    if (!isi) return;
-    if (!String(isi.nama || "").trim()) { showToast("Isi nama dulu ya.", "error"); return; }
-
-    try {
-      // snapshot item dulu sebelum keranjang dibersihin (buat teks WA)
-      const ringkas = Keranjang.items.map((i) => `• ${i.nama} ${i.qty}x`).join("%0A");
-      const res = await TmDb.kirimPesanan({
-        nama: isi.nama, wa: isi.wa, catatan: isi.catatan,
-        items: Keranjang.items.map((i) => ({ id: i.id, qty: i.qty })),
-      });
-      Keranjang.kosongkan();
-      renderSemua();
-      suksesPesen(res, ringkas);
-    } catch (err) {
-      showToast(TmDb.pesanRamah(err), "error");
-    }
-  }
-
-  function suksesPesen(res, ringkas) {
-    showPopup(
-      `Kode pesenanmu: <b>#${esc(res.kode)}</b><br>Total: <b>${rupiah(res.total)}</b><br><br>
-       Simpen kode ini buat cek status.`, "success"
-    );
-    // kasih opsi share ke WA penjual sekalian (biar penjual cepet tau)
-    setTimeout(async () => {
-      if (!waPenjual) return; // nomor belum diisi di DB, jangan ganggu
-      const lanjut = await showPopup("Bagiin pesenan ini ke WhatsApp penjual?", "confirm");
-      if (lanjut) {
-        const teks = `Halo, mau pesen di Teras Mbun.%0A` +
-          `Kode: *${res.kode}*%0A${ringkas}%0ATotal: ${rupiah(res.total)}`;
-        window.open(`https://wa.me/${waPenjual}?text=${teks}`, "_blank");
-      }
-    }, 400);
   }
 
   // ── cek status ──
@@ -177,25 +97,31 @@ const Menu = (function () {
     }
   }
 
+  const LABEL_STATUS = { menunggu: "Menunggu — antrian dapur", dibuat: "Lagi dimasak 👨‍🍳", siap: "Siap! Tinggal diambil ✅" };
+  const IKON_STATUS = { menunggu: "fa-clock", dibuat: "fa-fire-burner", siap: "fa-circle-check" };
+
   function renderHasilStatus(box, p) {
-    const label = { menunggu: "Menunggu — antrian dapur", dibuat: "Lagi dimasak 👨‍🍳", siap: "Siap! Tinggal diambil ✅" };
-    const ikon = { menunggu: "fa-clock", dibuat: "fa-fire-burner", siap: "fa-circle-check" };
     const items = Array.isArray(p.items) ? p.items : [];
+    const lvl = p.level_pedas > 0 ? `<li>🌶️ Level pedas: <b>${esc(p.level_pedas)}</b></li>` : "";
+    const ambil = p.metode_ambil
+      ? `<li>${p.metode_ambil === "cod" ? "🛵 Diantar ke rumah" : "🏪 Ambil di toko"}</li>` : "";
+    const bayar = p.metode_bayar ? `<li>💳 Bayar: <b>${p.metode_bayar === "qris" ? "QRIS" : "Tunai"}</b></li>` : "";
     box.className = "hasil-status tampil";
     box.innerHTML = `
-      <span class="pill-status st-${esc(p.status)}"><i class="fa-solid ${ikon[p.status] || "fa-circle-info"}"></i> ${label[p.status] || esc(p.status)}</span>
+      <span class="pill-status st-${esc(p.status)}"><i class="fa-solid ${IKON_STATUS[p.status] || "fa-circle-info"}"></i> ${LABEL_STATUS[p.status] || esc(p.status)}</span>
       <ul class="daftar-item">
         ${items.map((i) => `<li>• ${esc(i.nama || "Menu")} ${esc(i.qty || 1)}x</li>`).join("")}
+        ${lvl}${ambil}${bayar}
         <li><b>Total: ${rupiah(p.total)}</b></li>
       </ul>`;
   }
 
   // ── daftar section di dropdown titik tiga ──
-  // Nambah section baru: tambah entri di sini + bikin <section id="..."> di index.html
+  // id = anchor di halaman ini; href = pindah halaman.
   const NAV_SECTIONS = [
     { id: "greeting", label: "Beranda", icon: "fa-house" },
     { id: "daftar", label: "Lihat Menu", icon: "fa-utensils" },
-    { id: "menu", label: "Pesan", icon: "fa-cart-shopping" },
+    { href: "pesen.html", label: "Pesan", icon: "fa-cart-shopping" },
     { id: "cekStatus", label: "Cek Status Pesenan", icon: "fa-magnifying-glass" },
   ];
 
@@ -206,7 +132,7 @@ const Menu = (function () {
 
     // render link dari NAV_SECTIONS
     panel.innerHTML = NAV_SECTIONS
-      .map((s) => `<a href="#${esc(s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`)
+      .map((s) => `<a href="${esc(s.href || "#" + s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`)
       .join("");
 
     const tutup = () => {
@@ -221,12 +147,13 @@ const Menu = (function () {
       btn.setAttribute("aria-expanded", String(buka));
     });
 
-    // klik link → smooth scroll + tutup panel
+    // klik link → kalo anchor, smooth scroll; kalo halaman, biarin jalan
     panel.addEventListener("click", (e) => {
       const a = e.target.closest("a");
       if (!a) return;
-      e.preventDefault();
       const href = a.getAttribute("href");
+      if (href && !href.startsWith("#")) { tutup(); return; } // pindah halaman
+      e.preventDefault();
       if (href === "#greeting") {
         // Beranda: scroll ke paling atas beneran (0px).
         // scrollIntoView#greeting mentok di bawah header karena header ikut alur dokumen.
@@ -249,31 +176,20 @@ const Menu = (function () {
 
   // ── init ──
   async function mulai() {
-    Keranjang.muat();
-    renderSemua();
-
-    // klik +/- menu
-    document.getElementById("gridMenu").addEventListener("click", (e) => {
-      const t = e.target.closest("[data-tambah]");
-      const k = e.target.closest("[data-kurang]");
-      if (t) {
-        const m = daftar.find((x) => x.id === Number(t.dataset.tambah));
-        if (m) { Keranjang.tambah(m); renderSemua(); }
-      } else if (k) {
-        Keranjang.kurang(Number(k.dataset.kurang));
-        renderSemua();
-      }
-    });
-
-    document.getElementById("btnPesan").addEventListener("click", alurPesan);
-
-    // dropdown navigasi titik tiga
+    renderTampil();
     pasangDropdown();
 
-    // tombol di greeting: lompat ke menu / ke cek status
-    document.getElementById("btnPesanSekarang").addEventListener("click", () => {
-      document.getElementById("daftar").scrollIntoView({ behavior: "smooth" });
+    // klik "liat menu lain" di showcase (state disimpen biar gak nutup pas re-render)
+    document.getElementById("menuTampil").addEventListener("click", (e) => {
+      const l = e.target.closest("[data-buka]");
+      if (!l) return;
+      const grup = l.closest(".menu-grup");
+      const buka = grup.classList.toggle("buka");
+      const kat = grup.dataset.kat;
+      if (buka) bukaTampil.add(kat); else bukaTampil.delete(kat);
     });
+
+    // tombol di greeting: ke cek status
     document.getElementById("btnLihatStatus").addEventListener("click", () => {
       const el = document.getElementById("cekStatus");
       el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -285,18 +201,14 @@ const Menu = (function () {
       if (e.key === "Enter") cekStatus(e.target.value);
     });
 
-    // muat menu + info warung (nomor WA penjual)
+    // muat menu
     try {
       daftar = await TmDb.muatMenu();
-      renderSemua();
+      renderTampil();
     } catch (err) {
-      document.getElementById("gridMenu").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
+      document.getElementById("menuTampil").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
       showToast(TmDb.pesanRamah(err), "error");
     }
-    try {
-      const info = await TmDb.infoWarung();
-      waPenjual = info.wa_penjual || "";
-    } catch (e) { /* tombol WA jadi disembunyiin kalau gagal */ }
 
     // realtime: kalau lagi cek status, statusnya ke-update sendiri
     TmDb.subscribe(() => {
@@ -308,5 +220,5 @@ const Menu = (function () {
   }
 
   document.addEventListener("DOMContentLoaded", mulai);
-  return { Keranjang };
+  return {};
 })();
