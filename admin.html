@@ -75,6 +75,14 @@
             <span>Deskripsi</span>
             <textarea id="fmDesk" rows="2" maxlength="200" placeholder="Opsional — ayam geprek, sambal matah, lalapan segar"></textarea>
           </label>
+          <!-- area foto: klik buat pilih ATAU tarik (drag & drop) file fotonya -->
+          <div class="field">
+            <span>Foto menu</span>
+            <div class="drop-foto" id="dropFoto" title="Klik atau tarik foto ke sini">
+              <input type="file" id="inputFotoForm" accept="image/*" hidden>
+              <div id="dropIsi"></div>
+            </div>
+          </div>
           <label class="cek-tersedia">
             <input type="checkbox" id="fmTersedia" checked>
             <span>Tersedia dijual</span>

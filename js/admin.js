@@ -16,6 +16,9 @@ const Admin = (function () {
   let media = { bg: "", qris: "" };   // URL foto warung dari setting
   let target = null;                  // target ganti foto: { tipe: "bg"|"qris"|"menu", id }
   let editId = null;                  // null = form nambah; terisi = lagi edit
+  let stagedFoto = null;              // foto terpilih di form (blob) — diunggah pas klik Simpan
+  let formFotoUrl = "";               // URL foto tersimpan dari menu yang lagi diedit
+  let fotoLokalUrl = "";              // objectURL preview sementara (dibuang pas form nutup)
 
   const rupiah = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
@@ -137,6 +140,10 @@ const Admin = (function () {
     document.getElementById("fmKat").value = m ? m.kategori : "";
     document.getElementById("fmDesk").value = (m && m.deskripsi) || "";
     document.getElementById("fmTersedia").checked = m ? m.tersedia !== false : true;
+    // reset area foto: preview foto tersimpan (kalo edit), belum ada pilihan baru
+    bersihkanStagedFoto();
+    formFotoUrl = (m && m.gambar) || "";
+    renderDropFoto();
     const form = document.getElementById("formMenu");
     form.hidden = false;
     form.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -146,6 +153,54 @@ const Admin = (function () {
   function tutupForm() {
     document.getElementById("formMenu").hidden = true;
     editId = null;
+    formFotoUrl = "";
+    bersihkanStagedFoto();
+  }
+
+  // ── area foto di form: klik / drag & drop ──
+  // Foto dikompres dulu di browser, tapi diunggah BARU pas klik Simpan
+  // (id menu-nya belum ada kalo menu baru). Sini cuma preview + staging.
+  function bersihkanStagedFoto() {
+    stagedFoto = null;
+    if (fotoLokalUrl) { URL.revokeObjectURL(fotoLokalUrl); fotoLokalUrl = ""; }
+  }
+
+  function renderDropFoto() {
+    const isi = document.getElementById("dropIsi");
+    const box = document.getElementById("dropFoto");
+    const url = fotoLokalUrl || formFotoUrl; // yang baru dipilih lebih duluan
+    if (url) {
+      box.classList.add("ada-foto");
+      isi.innerHTML = `<img src="${esc(url)}" alt="foto menu">
+        <span class="drop-sku">${stagedFoto
+          ? "Foto baru — otomatis kesimpen pas klik Simpan"
+          : "Foto sekarang — klik atau tarik foto buat ganti"}</span>
+        ${stagedFoto ? `<button type="button" class="drop-x" id="dropX" title="Buang foto terpilih"><i class="fa-solid fa-xmark"></i></button>` : ""}`;
+    } else {
+      box.classList.remove("ada-foto");
+      isi.innerHTML = `<span class="ikon-drop"><i class="fa-solid fa-camera"></i></span>
+        <b>Klik buat pilih, atau tarik fotonya ke sini</b>
+        <small>Opsional — foto menu biar keliatan menggugah selera</small>`;
+    }
+  }
+
+  async function prosesFotoForm(file) {
+    if (!file) return;
+    if (!file.type || !file.type.startsWith("image/")) {
+      showToast("Itu bukan foto ya. Pilih file gambar (jpg/png).", "error");
+      return;
+    }
+    try {
+      showToast("Kompres foto…", "info");
+      const blob = await TmDb.kompresFoto(file); // resize + JPEG di browser
+      bersihkanStagedFoto();
+      fotoLokalUrl = URL.createObjectURL(blob);  // preview langsung keliatan
+      stagedFoto = { blob };
+      renderDropFoto();
+      showToast("Foto siap — klik Simpan ya.", "success");
+    } catch (err) {
+      showToast(TmDb.pesanRamah(err), "error");
+    }
   }
 
   async function simpanForm(e) {
@@ -170,7 +225,17 @@ const Admin = (function () {
         tersedia: document.getElementById("fmTersedia").checked,
       }, pin);
       if (!res) return gagalPin();
-      showToast(editId ? "Menu di-update ✅" : "Menu nambah 🎉", "success");
+      // foto dari area klik/drag: baru diunggah sekarang (id menu udah ada)
+      if (stagedFoto) {
+        showToast("Unggah foto…", "info");
+        const urlBaru = await TmDb.uploadFoto(`menu-${res.id}`, stagedFoto.blob);
+        if (!(await TmDb.ubahMenuGambar(res.id, urlBaru, pin))) return gagalPin();
+        const lama = menuDaftar.find((x) => x.id === res.id);
+        if (lama && lama.gambar) TmDb.hapusFotoLama(lama.gambar).catch(() => {}); // file lama dibuang
+        showToast(editId ? "Menu + foto di-update ✅" : "Menu + foto disimpan 🎉", "success");
+      } else {
+        showToast(editId ? "Menu di-update ✅" : "Menu nambah 🎉", "success");
+      }
       tutupForm();
       await muat();
     } catch (err) {
@@ -291,6 +356,36 @@ const Admin = (function () {
     document.getElementById("btnTambah").addEventListener("click", () => bukaForm(null));
     document.getElementById("formMenu").addEventListener("submit", simpanForm);
     document.getElementById("fmBatal").addEventListener("click", tutupForm);
+
+    // area foto form: klik buat pilih ATAU drag & drop dari luar
+    const drop = document.getElementById("dropFoto");
+    const inputForm = document.getElementById("inputFotoForm");
+    drop.addEventListener("click", (e) => {
+      if (e.target.closest(".drop-x")) { // tombol ✕: buang foto terpilih
+        bersihkanStagedFoto();
+        renderDropFoto();
+        return;
+      }
+      inputForm.click();
+    });
+    inputForm.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = ""; // reset biar file sama bisa dipilih ulang
+      prosesFotoForm(file);
+    });
+    ["dragenter", "dragover"].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("siap-drag"); }));
+    ["dragleave", "drop"].forEach((ev) =>
+      drop.addEventListener(ev, (e) => {
+        e.preventDefault();
+        // dragleave kadang kena pas masuk ke dalem anaknya — jangan ilangin class-nya
+        if (ev === "dragleave" && drop.contains(e.relatedTarget)) return;
+        drop.classList.remove("siap-drag");
+      }));
+    drop.addEventListener("drop", (e) => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      prosesFotoForm(f);
+    });
 
     // klik di daftar menu: edit / ganti foto / toggle habis / hapus
     document.getElementById("daftarMenu").addEventListener("click", (e) => {
