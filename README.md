@@ -12,20 +12,22 @@ Deploy: **GitHub Pages** (`terasmbun.github.io`).
 
 ```
 index.html            # sisi customer: hero, showcase menu, cek status
-pesen.html            # halaman pesen: kartu menu + keranjang + form
-dapur.html            # sisi admin dapur: gate PIN, daftar realtime, kelola foto
+pesen.html            # halaman pesen: kartu menu per kategori + keranjang + form
+dapur.html            # sisi admin dapur: gate PIN, daftar realtime, ceklis status
+foto.html             # sisi admin foto: gate PIN, kelola foto latar, QRIS, menu
 css/style.css         # design system (palet hangat coklat-krem-hijau)
 js/config.js          # URL + anon key Supabase (publik, aman)
 js/db.js              # layer DB: baca langsung, nulis via RPC, upload foto
 js/menu.js            # logic sisi customer (index)
-js/pesen.js           # logic halaman pesen (draf, keranjang, level per item)
-js/dapur.js           # logic sisi dapur (+ panel foto menu)
+js/pesen.js           # logic halaman pesen (draf, keranjang, level per item, section QRIS)
+js/dapur.js           # logic sisi dapur
+js/foto.js            # logic halaman kelola foto (kompres → upload → simpan URL)
 js/toast.js           # toast bawaan (pola osistarpanone)
 js/notice.js          # pill nempel (live / error)
 js/show-popup.js      # modal pengganti alert()
 sw.js                 # service worker PWA
 manifest.webmanifest
-db/001..007-*.sql     # migrasi (sudah ke-apply di Supabase)
+db/001..008-*.sql     # migrasi (sudah ke-apply di Supabase)
 opencode.json         # config OpenCode: MCP Supabase nujuk ke project ini
 ```
 
@@ -42,7 +44,7 @@ buka `http://localhost:8000`.
 ## Hal penting soal database
 
 Semua benda di skema `terasmbun` (project Supabase e-learniz-v3).
-Migrasi lengkap ada di `db/001-…` sampai `db/007-…` (jalankan berurutan di
+Migrasi lengkap ada di `db/001-…` sampai `db/008-…` (jalankan berurutan di
 SQL Editor kalo bikin project baru).
 
 - **Menu** (`terasmbun.menu`): anon cuma bisa SELECT. Ubah menu lewat SQL Editor:
@@ -79,16 +81,17 @@ Semua foto disimpen di bucket **`terasmbun-media`** (public) — bukan di repo.
 Foto yang diupload otomatis dikompres dulu di browser (maks. sisi 1200px,
 JPEG ~0.7), jadi biasanya turun dari beberapa MB jadi ~100KB.
 
-- **Foto menu** — ganti dari `dapur.html`: masuk PIN → tombol **kamera** (topbar)
-  → panel "Foto Menu" → **Pasang / Ganti**. URL-nya disimpen ke kolom
-  `menu.gambar` lewat RPC `ubah_menu_gambar` (wajib PIN, URL divalidasi server
-  — cuma boleh dari bucket ini).
-- **Foto background** — URL-nya nempel di `css/style.css` (blok `body::before`).
-  Ganti: upload foto baru ke bucket, terus update URL di situ.
-- Belum ada foto? Tampil placeholder hangat (gradient + emoji kategori) —
-  gak bakal broken.
+Semua dikelola dari **`foto.html`** (masuk PIN → tombol kamera di dapur):
 
-Migrasi bucket + policy + RPC: `db/007-media-storage.sql`.
+- **Foto latar** — nongol di semua halaman. Kalo dihapus, balik ke
+  gradient hangat (gak ada foto = tetep rapi).
+- **Foto QRIS** — otomatis muncul di halaman pesen buat pelanggan yang
+  pilih bayar QRIS (sesudah pesenan dibuat).
+- **Foto menu** — per menu; URL-nya disimpen ke kolom `menu.gambar`.
+
+Semua ganti/hapus foto lewat RPC wajib PIN (`ubah_menu_gambar` buat menu,
+`ubah_media` buat bg/qris) — URL-nya divalidasi server, cuma boleh dari
+bucket ini. Migrasi: `db/007-media-storage.sql` + `db/008-media-warung.sql`.
 
 ## Alur pemakaian
 

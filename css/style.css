@@ -47,8 +47,10 @@ body {
    Urutan layer: overlay gradient (atas) → foto → solid warm (bawah).
    Kalo foto gak ada / gagal dimuat, gradient di atas solid tetap bikin
    latar hangat & enak dilihat.
-   Foto disimpen di Supabase Storage (bucket terasmbun-media), jadi
-   URL-nya absolut ke project Supabase — gak ikut ke-repo GitHub.       */
+   Foto disimpen di Supabase Storage (bucket terasmbun-media); URL-nya
+   di-set lewat JS dari setting DB (--bg-foto). Kalo setting kosong,
+   fallback-nya foto bg.jpg di bucket yang sama.                */
+:root { --bg-foto: url("https://vttmwtlqzbbiaromohrp.supabase.co/storage/v1/object/public/terasmbun-media/bg.jpg"); }
 body::before {
   content: "";
   position: fixed;
@@ -56,7 +58,7 @@ body::before {
   z-index: -2;
   background:
     linear-gradient(165deg, rgba(42, 24, 16, 0.80) 0%, rgba(74, 47, 30, 0.58) 45%, rgba(240, 169, 46, 0.34) 100%),
-    url("https://vttmwtlqzbbiaromohrp.supabase.co/storage/v1/object/public/terasmbun-media/bg.jpg") center / cover no-repeat;
+    var(--bg-foto) center / cover no-repeat;
   background-color: #3a2416;
 }
 
@@ -285,8 +287,10 @@ body::before {
 
 .kartu-menu .aksi { display: flex; align-items: center; justify-content: center; gap: 14px; }
 
-/* level pedas PER kartu (khusus makanan, nongol kalo qty aktif) */
+/* level pedas PER kartu (khusus makanan) — selalu keliatan, tapi
+   disabled kalo qty-nya 0 (sama kayak tombol batal/masuk keranjang) */
 .level-baris { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.level-baris.mati .lvl-label { opacity: .45; }
 .lvl-label { font-size: .74rem; font-weight: 800; color: #b53a1c; display: inline-flex; align-items: center; gap: 5px; }
 .lvl-chips { display: flex; gap: 4px; }
 .lvl-chip {
@@ -298,6 +302,9 @@ body::before {
 }
 .lvl-chip:hover { border-color: rgba(181, 58, 28, .5); }
 .lvl-chip:active { transform: scale(.9); }
+.lvl-chip:disabled { opacity: .45; cursor: not-allowed; }
+.lvl-chip:disabled:hover { border-color: rgba(42, 24, 16, .18); }
+.lvl-chip:disabled:active { transform: none; }
 .lvl-chip.aktif {
   background: linear-gradient(135deg, #e2573a, #b53a1c); color: #fff;
   border-color: transparent; box-shadow: 0 3px 9px rgba(181, 58, 28, .38);
@@ -435,17 +442,29 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
 }
 .tag-qris { background: rgba(47, 158, 99, .12); color: #1e7a4a; border-color: rgba(47, 158, 99, .35); }
 
-/* ── Panel kelola foto menu (dapur) ── */
-.panel-foto {
+/* ── Halaman foto (foto.html): kelola foto bg, qris, menu ── */
+.media-kartu {
   background: rgba(255, 251, 244, 0.95); color: var(--ink);
   border: 1px solid var(--glass-line); border-radius: var(--r);
-  box-shadow: var(--shadow); padding: 16px; margin-bottom: 15px; animation: rise .28s ease both;
+  box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; animation: rise .28s ease both;
 }
-.panel-foto .head-panel { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
-.panel-foto h2 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--espresso); }
-.panel-foto .petunjuk-foto { color: var(--muted); font-size: .84rem; margin: 4px 0 12px; }
+.media-kartu h2 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--espresso); display: flex; align-items: center; gap: 8px; }
+.media-kartu .petunjuk { color: var(--muted); font-size: .84rem; margin: 4px 0 12px; }
+.media-preview {
+  border-radius: 14px; overflow: hidden; margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--coklat) 0%, var(--coklat2) 60%, var(--amber) 160%);
+  aspect-ratio: 21 / 9; display: flex; align-items: center; justify-content: center;
+}
+.media-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-preview .kosong-foto-txt { color: rgba(255, 250, 242, .85); font-weight: 700; font-size: .88rem; text-align: center; padding: 0 14px; }
+.aksi-media { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .baris-foto { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(42, 24, 16, .1); }
-.baris-foto:first-child { border-top: none; }
+.baris-foto:first-of-type { border-top: none; }
+.baris-foto + .kat-judul-kecil { border-top: 1px solid rgba(42, 24, 16, .1); padding-top: 14px; }
+.kat-judul-kecil {
+  display: flex; align-items: center; gap: 9px; margin: 10px 0 2px;
+  font-family: var(--font-display); font-weight: 700; color: var(--coklat); font-size: 1rem;
+}
 .thumb-foto {
   width: 54px; height: 54px; flex: none; border-radius: 13px; overflow: hidden;
   background: rgba(42, 24, 16, .07); display: flex; align-items: center; justify-content: center;
@@ -457,6 +476,16 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
 .info-foto small { color: var(--muted); font-weight: 600; }
 .aksi-foto { display: flex; align-items: center; gap: 7px; }
 .btn-foto { background: rgba(42, 24, 16, .08); color: var(--coklat); border: 1px solid rgba(42, 24, 16, .16); }
+
+/* ── Section foto QRIS setelah pesenan dibuat (pesen.html) ── */
+.qris-bayar { animation: rise .3s ease both; }
+.qris-bayar .qris-total { font-weight: 800; color: var(--daun); font-size: 1.05rem; margin: 4px 0 10px; }
+.qris-bayar .qris-foto {
+  border-radius: 14px; overflow: hidden; background: #fff;
+  border: 1px solid rgba(42, 24, 16, .14); max-width: 300px; margin: 0 auto 10px;
+}
+.qris-bayar .qris-foto img { width: 100%; display: block; }
+.qris-bayar .catatan-qris { color: var(--muted); font-size: .85rem; text-align: center; }
 
 /* ===== Toast ===== */
 #toast-container { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
@@ -555,6 +584,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
 .kartu-form .kat-judul { margin: 4px 0 12px; }
 .kartu-form .kat-judul .label { color: var(--coklat); text-shadow: none; font-size: 1.3rem; }
 .kartu-form .kat-judul .ikon { box-shadow: none; }
+.kat-seksi + .kat-seksi { margin-top: 18px; } /* jarak antar grup kategori */
 .kartu-form .btn-lain {
   color: var(--coklat); background: rgba(240, 169, 46, .16);
   border: 1px dashed rgba(240, 169, 46, .85); margin-top: 11px; padding: 10px 16px;

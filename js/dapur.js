@@ -12,8 +12,6 @@ const Dapur = (function () {
   let hariIniSaja = true;
   let waPenjual = "";
   let pin = sessionStorage.getItem(TM_PIN_KEY) || "";
-  let menuFoto = [];       // menu buat panel kelola foto
-  let idFotoTarget = 0;    // menu yang lagi dipilih fotonya
 
   const rupiah = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
@@ -50,6 +48,7 @@ const Dapur = (function () {
     try {
       const info = await TmDb.infoWarung();
       waPenjual = info.wa_penjual || "";
+      TmDb.terapkanBg(info.bg || ""); // foto latar dari setting (kosong = gradient)
     } catch (e) { /* tombol WA tetap jalan tanpa nomor (diblokir) */ }
     await muat();
     TmDb.subscribe(() => muat(true)); // realtime: list ke-update sendiri
@@ -165,75 +164,6 @@ const Dapur = (function () {
     window.open(`https://wa.me/${nomor}?text=${encodeURIComponent(teks)}`, "_blank");
   }
 
-  // ── panel foto menu: kompres → upload Storage → simpan URL (PIN) ──
-  const emojiKat = (k) => ({ nasi: "🍚", minuman: "🥤", lauk: "🍗", snack: "🍘" }[String(k || "").toLowerCase()] || "🍽️");
-
-  function renderFoto() {
-    const kotak = document.getElementById("daftarFoto");
-    if (!menuFoto.length) { kotak.innerHTML = '<p class="kosong">Menu masih kosong.</p>'; return; }
-    kotak.innerHTML = menuFoto.map((m) => `<div class="baris-foto">
-      <div class="thumb-foto">${m.gambar
-        ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy">`
-        : `<span class="emoji-foto">${emojiKat(m.kategori)}</span>`}</div>
-      <div class="info-foto">
-        <b>${esc(m.nama)}</b>
-        <small>${rupiah(m.harga)}</small>
-      </div>
-      <div class="aksi-foto">
-        <button class="btn btn-kecil btn-foto" data-ganti="${m.id}"><i class="fa-solid fa-camera"></i> ${m.gambar ? "Ganti" : "Pasang"}</button>
-        ${m.gambar ? `<button class="btn btn-kecil btn-kaca" data-hapusfoto="${m.id}" title="Hapus foto"><i class="fa-solid fa-trash"></i></button>` : ""}
-      </div>
-    </div>`).join("");
-  }
-
-  async function bukaPanelFoto() {
-    document.getElementById("panelFoto").hidden = false;
-    if (!menuFoto.length) {
-      try {
-        menuFoto = await TmDb.muatMenu();
-      } catch (err) {
-        showToast(TmDb.pesanRamah(err), "error");
-        return;
-      }
-    }
-    renderFoto();
-  }
-
-  async function prosesFoto(file) {
-    if (!file || !idFotoTarget) return;
-    const m = menuFoto.find((x) => x.id === idFotoTarget);
-    try {
-      showToast("Kompres & unggah foto…", "info");
-      const blob = await TmDb.kompresFoto(file);           // resize + JPEG di browser
-      const urlBaru = await TmDb.uploadFotoMenu(idFotoTarget, blob);
-      const ok = await TmDb.ubahMenuGambar(idFotoTarget, urlBaru, pin);
-      if (!ok) { showToast("PIN gak valid. Masuk ulang ya.", "error"); keluar(); return; }
-      if (m && m.gambar) TmDb.hapusFotoLama(m.gambar).catch(() => {}); // file lama dibuang (biar gak numpuk)
-      if (m) m.gambar = urlBaru;
-      renderFoto();
-      showToast(`Foto "${m ? m.nama : "menu"}" disimpan ✅`);
-    } catch (err) {
-      showToast(TmDb.pesanRamah(err), "error");
-    }
-  }
-
-  async function hapusFoto(id) {
-    const m = menuFoto.find((x) => x.id === id);
-    if (!m || !m.gambar) return;
-    const yakin = await showPopup(`Hapus foto "${esc(m.nama)}"?`, "confirm");
-    if (!yakin) return;
-    try {
-      const ok = await TmDb.ubahMenuGambar(id, "", pin);
-      if (!ok) { showToast("PIN gak valid. Masuk ulang ya.", "error"); keluar(); return; }
-      TmDb.hapusFotoLama(m.gambar).catch(() => {}); // file dibuang (best-effort)
-      m.gambar = null;
-      renderFoto();
-      showToast("Foto dihapus.");
-    } catch (err) {
-      showToast(TmDb.pesanRamah(err), "error");
-    }
-  }
-
   function keluar() {
     sessionStorage.removeItem(TM_PIN_KEY);
     pin = "";
@@ -276,27 +206,6 @@ const Dapur = (function () {
       muat();
     });
     document.getElementById("btnShareWa").addEventListener("click", shareWa);
-
-    // panel kelola foto menu
-    document.getElementById("btnFoto").addEventListener("click", bukaPanelFoto);
-    document.getElementById("btnTutupFoto").addEventListener("click", () => {
-      document.getElementById("panelFoto").hidden = true;
-    });
-    document.getElementById("daftarFoto").addEventListener("click", (e) => {
-      const ganti = e.target.closest("[data-ganti]");
-      const hapus = e.target.closest("[data-hapusfoto]");
-      if (ganti) {
-        idFotoTarget = Number(ganti.dataset.ganti);
-        document.getElementById("inputFotoMenu").click(); // pilih dari galeri
-      } else if (hapus) {
-        hapusFoto(Number(hapus.dataset.hapusfoto));
-      }
-    });
-    document.getElementById("inputFotoMenu").addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      e.target.value = ""; // reset dulu biar file yang sama bisa dipilih ulang
-      prosesFoto(file);
-    });
 
     // udah pernah masuk PIN di tab ini? langsung buka
     if (pin) cobaMasuk();

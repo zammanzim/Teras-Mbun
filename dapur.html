@@ -34,7 +34,7 @@
           <span class="nama">Dapur Mbun<small id="subJudul">PESANAN HARI INI</small></span>
         </a>
         <div class="top-right">
-          <button class="btn btn-kecil btn-kaca" id="btnFoto" title="Kelola foto menu"><i class="fa-solid fa-camera"></i></button>
+          <a class="btn btn-kecil btn-kaca" href="foto.html" title="Kelola foto"><i class="fa-solid fa-camera"></i></a>
           <button class="btn btn-kecil btn-kaca" id="btnHariIni" title="Filter hari ini"><i class="fa-solid fa-calendar-day"></i></button>
           <button class="btn btn-kecil btn-kaca" id="btnSegarkan" title="Segarkan"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-kecil btn-kaca" id="btnKeluar" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -43,19 +43,6 @@
     </header>
 
     <main class="wrap">
-      <!-- Panel kelola foto menu (tersembunyi; muncul lewat tombol kamera) -->
-      <section class="panel-foto" id="panelFoto" hidden>
-        <div class="head-panel">
-          <h2><i class="fa-solid fa-camera"></i> Foto Menu</h2>
-          <button class="btn btn-kecil btn-kaca" id="btnTutupFoto" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <p class="petunjuk-foto">Pilih foto dari galeri — otomatis dikompres dulu biar enteng dibuka pelanggan.</p>
-        <div id="daftarFoto">
-          <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
-        </div>
-      </section>
-      <input type="file" id="inputFotoMenu" accept="image/*" hidden>
-
       <div class="tabs" id="tabs">
         <button class="tab aktif" data-tab="menunggu">Baru Masuk<span class="jml" id="jmlMenunggu">0</span></button>
         <button class="tab" data-tab="dibuat">Lagi Dibuat<span class="jml" id="jmlDibuat">0</span></button>

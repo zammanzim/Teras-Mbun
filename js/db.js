@@ -119,8 +119,9 @@ const TmDb = (function () {
 
     // Upload foto kompres ke bucket; nama file pakai stempel waktu biar
     // URL publiknya selalu baru (gak ketimpa cache browser/CDN).
-    async uploadFotoMenu(idMenu, blob) {
-      const nama = `menu-${idMenu}-${Date.now()}.jpg`;
+    // namaDasar bebas: "menu-1", "bg", "qris", dll.
+    async uploadFoto(namaDasar, blob) {
+      const nama = `${namaDasar}-${Date.now()}.jpg`;
       const { error } = await supa.storage.from(TM_BUCKET).upload(nama, blob, {
         contentType: "image/jpeg",
         upsert: true,
@@ -137,6 +138,24 @@ const TmDb = (function () {
       });
       if (error) throw error;
       return !!data;
+    },
+
+    // Simpan URL foto warung ("bg" = latar, "qris") ke tabel setting —
+    // wajib PIN, URL divalidasi server juga.
+    async ubahMedia(key, url, pin) {
+      const { data, error } = await supa.rpc("ubah_media", {
+        p_key: key, p_gambar: url || "", p_pin: String(pin || ""),
+      });
+      if (error) throw error;
+      return !!data;
+    },
+
+    // Terapkan foto latar ke halaman (CSS var --bg-foto di :root).
+    // url kosong → "none" (cuma gradient hangat, kayak belum ada foto).
+    terapkanBg(url) {
+      document.documentElement.style.setProperty(
+        "--bg-foto", url ? `url("${url}")` : "none"
+      );
     },
 
     // Buang file lama di bucket (best-effort) biar gak numpuk —

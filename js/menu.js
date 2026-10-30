@@ -213,6 +213,9 @@ const Menu = (function () {
       showToast(TmDb.pesanRamah(err), "error");
     }
 
+    // foto latar dari setting (kosong = gradient hangat)
+    try { TmDb.terapkanBg((await TmDb.infoWarung()).bg || ""); } catch (e) { /* latar default tetep jalan */ }
+
     // realtime: kalau lagi cek status, statusnya ke-update sendiri
     TmDb.subscribe(() => {
       const box = document.getElementById("hasilStatus");

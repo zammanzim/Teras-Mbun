@@ -29,11 +29,24 @@
   <main class="wrap">
     <h1 class="judul-pesen">Pesan <em>enak</em>, tanpa ribet 🍜</h1>
 
+    <!-- Section QRIS: muncul setelah pesenan dibuat & bayarnya QRIS -->
+    <section class="kartu-form qris-bayar" id="qrisBayar" hidden>
+      <h2 class="kartu-judul"><span class="no"><i class="fa-solid fa-qrcode"></i></span> Bayar QRIS</h2>
+      <p>Pesenanmu udah masuk dapur. Scan QR di bawah ini buat bayar:</p>
+      <p class="qris-total" id="qrisTotal"></p>
+      <div class="qris-foto" id="qrisFoto"></div>
+      <p class="catatan-qris" id="qrisCatatan"></p>
+      <div class="aksi-media">
+        <button class="btn btn-kecil btn-foto" id="btnBuktiWa"><i class="fa-brands fa-whatsapp"></i> Kabari kalo udah bayar</button>
+        <button class="btn btn-kecil btn-kaca" id="btnTutupQris" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </section>
+
     <form id="formPesen" novalidate>
       <!-- 1. Pilih menu -->
       <div class="kartu-form">
         <h2 class="kartu-judul"><span class="no">1</span> Pilih menu</h2>
-        <div class="pilih-grid" id="gridPilih">
+        <div id="gridPilih">
           <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
         </div>
       </div>

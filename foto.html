@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foto — Teras Mbun</title>
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2a1810">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Gerbang PIN (sama kayak dapur — PIN disimpen di sessionStorage) -->
+  <div class="gate" id="gate">
+    <div class="box">
+      <div class="ikon"><i class="fa-solid fa-camera"></i></div>
+      <h1>Kelola Foto</h1>
+      <p>Masukin PIN dulu biar bisa ganti foto warung & menu.</p>
+      <input type="password" id="inputPin" placeholder="PIN dapur" inputmode="numeric" autocomplete="off">
+      <button class="btn btn-hijau btn-lebar" id="btnMasuk" style="margin-top:12px">Masuk</button>
+    </div>
+  </div>
+
+  <!-- Isi halaman -->
+  <div id="isi" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="foto.html">
+          <span class="logo"><i class="fa-solid fa-camera"></i></span>
+          <span class="nama">Foto Mbun<small>Kelola Foto</small></span>
+        </a>
+        <div class="top-right">
+          <a class="btn btn-kecil btn-kaca" href="dapur.html"><i class="fa-solid fa-kitchen-set"></i> Dapur</a>
+          <button class="btn btn-kecil btn-kaca" id="btnKeluar" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <!-- Foto latar web -->
+      <section class="media-kartu">
+        <h2><i class="fa-solid fa-image"></i> Foto Latar</h2>
+        <p class="petunjuk">Foto besar yang jadi latar semua halaman. Kalo dihapus, latar balik ke gradient hangat.</p>
+        <div class="media-preview" id="prevBg"></div>
+        <div class="aksi-media">
+          <button class="btn btn-kecil btn-foto" data-media="bg:ganti"><i class="fa-solid fa-camera"></i> Ganti foto</button>
+          <button class="btn btn-kecil btn-kaca" data-media="bg:hapus"><i class="fa-solid fa-trash"></i> Hapus</button>
+        </div>
+      </section>
+
+      <!-- Foto QRIS -->
+      <section class="media-kartu">
+        <h2><i class="fa-solid fa-qrcode"></i> Foto QRIS</h2>
+        <p class="petunjuk">Nongol otomatis di halaman pesen buat pelanggan yang pilih bayar QRIS.</p>
+        <div class="media-preview" id="prevQris"></div>
+        <div class="aksi-media">
+          <button class="btn btn-kecil btn-foto" data-media="qris:ganti"><i class="fa-solid fa-camera"></i> Ganti foto</button>
+          <button class="btn btn-kecil btn-kaca" data-media="qris:hapus"><i class="fa-solid fa-trash"></i> Hapus</button>
+        </div>
+      </section>
+
+      <!-- Foto menu -->
+      <section class="media-kartu">
+        <h2><i class="fa-solid fa-utensils"></i> Foto Menu</h2>
+        <p class="petunjuk">Foto tiap menu — otomatis dikompres dulu biar enteng dibuka pelanggan.</p>
+        <div id="daftarFoto">
+          <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- input file tersembunyi — dipicu tombol ganti/pasang -->
+  <input type="file" id="inputFoto" accept="image/*" hidden>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/notice.js"></script>
+  <script src="js/show-popup.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/foto.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+  </script>
+</body>
+</html>

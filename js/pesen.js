@@ -14,6 +14,9 @@ const Pesen = (function () {
   let lvlDraf = new Map();// level pedas draft per kartu (id → 0..5)
   let keranjang = [];     // committed: [{id, nama, harga, qty, level}]
   let waPenjual = "";
+  let fotoQris = "";      // URL foto QRIS dari setting (kosong = belum ada)
+  let kodeTerakhir = "";  // kode pesenan terakhir (buat tombol WA di section QRIS)
+  let totalTerakhir = 0;
   let renderPertama = true; // animasi entrance cuma sekali
 
   const LEVEL = [
@@ -58,8 +61,11 @@ const Pesen = (function () {
 
   // ── render kartu menu ──
   // 1 kartu = 1 menu: foto, nama+harga, stepper − qty +,
-  // tombol "✕ Batalin" (buang draft + item di keranjang)
-  // & "Masukkan Keranjang" (commit draft ke keranjang).
+  // level pedas (selalu tampil, disabled kalo qty 0),
+  // tombol "✕ Batalin" & "Masukkan Keranjang".
+  // Kartu dikelompokin per kategori, gaya sama kaya halaman utama.
+  const labelKat = (k) => String(k || "lain").replace(/_/g, " ");
+
   function renderPilih() {
     const grid = document.getElementById("gridPilih");
     if (!daftar.length) {
@@ -67,54 +73,72 @@ const Pesen = (function () {
       return;
     }
     const anim = renderPertama; // entrance animasi cuma pas load pertama
-    grid.innerHTML = daftar.map((m, ix) => {
-      const q = draf.get(m.id) || 0;
-      const lvlNow = lvlDraf.get(m.id) || 0;
-      const komit = ada(m.id);
-      const sinkron = komit && komit.qty === q && (komit.level || 0) === lvlNow; // sama semua
-      const adaFoto = !!m.gambar;
-      const labelMasuk = sinkron
-        ? '<i class="fa-solid fa-check"></i> Di keranjang'
-        : komit ? "Update" : '<i class="fa-solid fa-cart-plus"></i> Keranjang';
-      // level pedas per kartu — khusus makanan, nongol kalo qty-nya aktif
-      const levelBaris = (isMakanan(m.id) && (q || komit)) ? `
-        <div class="level-baris">
-          <span class="lvl-label"><i class="fa-solid fa-pepper-hot"></i> Pedas</span>
-          <div class="lvl-chips">
-            ${LEVEL.map((l) => `<button type="button" class="lvl-chip${lvlNow === l.v ? " aktif" : ""}"
-              data-level="${m.id}:${l.v}" aria-label="${l.label}" title="${l.label}">${l.v}</button>`).join("")}
-          </div>
-        </div>` : "";
-      return `<div class="kartu-menu${sinkron ? " di-keranjang" : ""}${anim ? " anim" : ""}"
-              ${anim ? `style="animation-delay:${ix * 30}ms"` : ""}>
-        <div class="foto ${adaFoto ? "" : "kosong-foto"}">
-          ${adaFoto
-            ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
-                    onerror="this.closest('.foto').classList.add('kosong-foto'); this.remove();">`
-            : ""}
-          <span class="foto-emoji">${emojiKat(m.kategori)}</span>
+    // kelompokin per kategori
+    const peta = new Map();
+    daftar.forEach((m) => {
+      const k = m.kategori || "lain";
+      if (!peta.has(k)) peta.set(k, []);
+      peta.get(k).push(m);
+    });
+    let ix = 0; // nomor urut global (buat jeda animasi antar kartu)
+    grid.innerHTML = [...peta.entries()].map(([kat, items]) => `
+      <div class="kat-seksi">
+        <div class="kat-judul"><span class="ikon">${emojiKat(kat)}</span><span class="label">${esc(labelKat(kat))}</span></div>
+        <div class="pilih-grid">
+          ${items.map((m) => kartuPilih(m, ix++)).join("")}
         </div>
-        <div class="info">
-          <span class="nama">${esc(m.nama)}</span>
-          <span class="harga">${rupiah(m.harga)}</span>
-        </div>
-        <div class="aksi">
-          <button type="button" class="qty-btn" data-kurang="${m.id}" ${q ? "" : "disabled"} aria-label="Kurangi ${esc(m.nama)}">−</button>
-          <span class="qty-num">${q}</span>
-          <button type="button" class="qty-btn" data-tambah="${m.id}" aria-label="Tambah ${esc(m.nama)}">+</button>
-        </div>
-        ${levelBaris}
-        <div class="tombol-kartu">
-          <button type="button" class="btn-batal" data-batal="${m.id}" aria-label="Batalin ${esc(m.nama)}" ${q || komit ? "" : "disabled"}>
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-          <button type="button" class="btn-masuk" data-masuk="${m.id}" ${q ? "" : "disabled"}>
-            ${labelMasuk}
-          </button>
-        </div>
-      </div>`;
-    }).join("");
+      </div>`).join("");
     if (daftar.length) renderPertama = false;
+  }
+
+  function kartuPilih(m, ix) {
+    const q = draf.get(m.id) || 0;
+    const lvlNow = lvlDraf.get(m.id) || 0;
+    const komit = ada(m.id);
+    const sinkron = komit && komit.qty === q && (komit.level || 0) === lvlNow; // sama semua
+    const adaFoto = !!m.gambar;
+    const aktif = !!(q || komit); // qty draft atau udah masuk keranjang
+    const labelMasuk = sinkron
+      ? '<i class="fa-solid fa-check"></i> Di keranjang'
+      : komit ? "Update" : '<i class="fa-solid fa-cart-plus"></i> Keranjang';
+    // level pedas per kartu — khusus makanan, SELALU tampil;
+    // kalo qty-nya 0 chips-nya disabled (sama kayak tombol batal/masuk)
+    const levelBaris = isMakanan(m.id) ? `
+      <div class="level-baris${aktif ? "" : " mati"}">
+        <span class="lvl-label"><i class="fa-solid fa-pepper-hot"></i> Pedas</span>
+        <div class="lvl-chips">
+          ${LEVEL.map((l) => `<button type="button" class="lvl-chip${lvlNow === l.v ? " aktif" : ""}"
+            data-level="${m.id}:${l.v}" aria-label="${l.label}" title="${l.label}" ${aktif ? "" : "disabled"}>${l.v}</button>`).join("")}
+        </div>
+      </div>` : "";
+    return `<div class="kartu-menu${sinkron ? " di-keranjang" : ""}${anim ? " anim" : ""}"
+            ${anim ? `style="animation-delay:${ix * 30}ms"` : ""}>
+      <div class="foto ${adaFoto ? "" : "kosong-foto"}">
+        ${adaFoto
+          ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
+                  onerror="this.closest('.foto').classList.add('kosong-foto'); this.remove();">`
+          : ""}
+        <span class="foto-emoji">${emojiKat(m.kategori)}</span>
+      </div>
+      <div class="info">
+        <span class="nama">${esc(m.nama)}</span>
+        <span class="harga">${rupiah(m.harga)}</span>
+      </div>
+      <div class="aksi">
+        <button type="button" class="qty-btn" data-kurang="${m.id}" ${q ? "" : "disabled"} aria-label="Kurangi ${esc(m.nama)}">−</button>
+        <span class="qty-num">${q}</span>
+        <button type="button" class="qty-btn" data-tambah="${m.id}" aria-label="Tambah ${esc(m.nama)}">+</button>
+      </div>
+      ${levelBaris}
+      <div class="tombol-kartu">
+        <button type="button" class="btn-batal" data-batal="${m.id}" aria-label="Batalin ${esc(m.nama)}" ${q || komit ? "" : "disabled"}>
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <button type="button" class="btn-masuk" data-masuk="${m.id}" ${q ? "" : "disabled"}>
+          ${labelMasuk}
+        </button>
+      </div>
+    </div>`;
   }
 
   // ── aksi kartu ──
@@ -227,6 +251,7 @@ const Pesen = (function () {
 
     const btn = document.getElementById("btnKirim");
     btn.disabled = true;
+    document.getElementById("qrisBayar").hidden = true; // section QRIS lama disembunyiin
 
     // snapshot dulu (keranjang dibersihin sesudah sukses)
     const ringkasTeks = keranjang
@@ -245,6 +270,7 @@ const Pesen = (function () {
         ambil, alamat, bayar,
       });
       sukses(res, ringkasTeks, alamat, ambilTeks, bayarTeks);
+      if (bayar === "qris") tampilQris(res); // section foto QRIS
       keranjang = [];
       draf.clear();
       lvlDraf.clear();
@@ -278,6 +304,27 @@ const Pesen = (function () {
     );
   }
 
+  // ── section QRIS: muncul kalo pesenan barusan pilih bayar QRIS ──
+  function tampilQris(res) {
+    kodeTerakhir = res.kode;
+    totalTerakhir = res.total;
+    document.getElementById("qrisTotal").textContent = `Total bayar: ${rupiah(res.total)}`;
+    const kotak = document.getElementById("qrisFoto");
+    if (fotoQris) {
+      kotak.innerHTML = `<img src="${esc(fotoQris)}" alt="QRIS Teras Mbun" loading="lazy">`;
+      document.getElementById("qrisCatatan").textContent =
+        "Scan pakai aplikasi apa aja, nominal sesuai total. Abis bayar, kabari penjual ya.";
+    } else {
+      kotak.innerHTML = "";
+      document.getElementById("qrisCatatan").textContent =
+        "QRIS-nya lagi disiapin — kabari penjual langsung ya.";
+    }
+    document.getElementById("btnBuktiWa").hidden = !waPenjual;
+    const box = document.getElementById("qrisBayar");
+    box.hidden = false;
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   // ── init ──
   async function mulai() {
     renderSemua();
@@ -302,6 +349,15 @@ const Pesen = (function () {
 
     document.getElementById("formPesen").addEventListener("submit", kirim);
 
+    // section QRIS: tombol tutup + kabari penjual lewat WA
+    document.getElementById("btnTutupQris").addEventListener("click", () => {
+      document.getElementById("qrisBayar").hidden = true;
+    });
+    document.getElementById("btnBuktiWa").addEventListener("click", () => {
+      const teks = `Halo, udah bayar QRIS pesenan #${kodeTerakhir} total ${rupiah(totalTerakhir)} ya. Ini buktinya 🙏`;
+      window.open(`https://wa.me/${waPenjual}?text=${encodeURIComponent(teks)}`, "_blank");
+    });
+
     // muat menu + nomor WA penjual
     try {
       daftar = await TmDb.muatMenu();
@@ -313,6 +369,8 @@ const Pesen = (function () {
     try {
       const info = await TmDb.infoWarung();
       waPenjual = info.wa_penjual || "";
+      fotoQris = info.qris || "";
+      TmDb.terapkanBg(info.bg || ""); // foto latar dari setting (kosong = gradient)
     } catch (e) { /* tombol WA jadi disembunyiin kalau gagal */ }
   }
 
