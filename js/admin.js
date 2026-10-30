@@ -127,7 +127,10 @@ const Admin = (function () {
   // ── form tambah / edit menu ──
   function bukaForm(m) {
     editId = m ? m.id : null;
-    document.getElementById("formJudul").textContent = m ? `Edit: ${m.nama}` : "Menu baru";
+    // judul form + ikon (pensil pas edit, plus pas nambah)
+    document.getElementById("formJudul").innerHTML = m
+      ? `<i class="fa-solid fa-pen"></i> Edit: ${esc(m.nama)}`
+      : `<i class="fa-solid fa-circle-plus"></i> Menu baru`;
     document.getElementById("fmNama").value = m ? m.nama : "";
     document.getElementById("fmHarga").value = m ? m.harga : "";
     document.getElementById("fmUrut").value = m ? m.urutan : "";

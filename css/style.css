@@ -369,13 +369,17 @@ body::before {
 .cek-status h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin-bottom: 12px; }
 .row-input { display: flex; gap: 9px; }
 
-input[type="text"], input[type="tel"], input[type="password"], textarea {
+input[type="text"], input[type="tel"], input[type="password"], input[type="number"], input[type="email"], textarea {
   font: inherit; width: 100%; padding: 12px 14px; border-radius: 13px;
   border: 1px solid rgba(42, 24, 16, .18); background: rgba(255, 255, 255, .8); color: var(--ink);
   transition: border .15s ease, box-shadow .15s ease;
 }
 input:focus, textarea:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(240, 169, 46, .28); }
 ::placeholder { color: var(--muted); }
+/* input angka: spinner bawaan browser disembunyiin — norak & gak seragam */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 .hasil-status { margin-top: 14px; display: none; }
 .hasil-status.tampil { display: block; }
@@ -457,6 +461,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
   aspect-ratio: 21 / 9; display: flex; align-items: center; justify-content: center;
 }
 .media-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#prevQris img { object-fit: contain; background: #fff; } /* QRIS jangan ke-crop — bisa gak kebaca */
 .media-preview .kosong-foto-txt { color: rgba(255, 250, 242, .85); font-weight: 700; font-size: .88rem; text-align: center; padding: 0 14px; }
 .aksi-media { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .baris-foto { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(42, 24, 16, .1); }
@@ -485,15 +490,38 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
   background: #b53a1c; color: #fff; border-radius: 999px; padding: 2px 8px; letter-spacing: .4px;
 }
 
-/* form tambah/edit menu di dalem kartu */
+/* form tambah/edit menu di dalem kartu — kotak krem hangat,
+   garis amber, judul berikon biar gak keliatan "polosan" */
 .form-menu {
-  background: rgba(42, 24, 16, .05); border: 1px dashed rgba(42, 24, 16, .3);
-  border-radius: 14px; padding: 13px 14px; margin-bottom: 14px; animation: rise .25s ease both;
+  background: linear-gradient(180deg, rgba(255, 251, 244, .96), rgba(250, 240, 222, .96));
+  border: 1px solid rgba(240, 169, 46, .55);
+  border-radius: 16px; padding: 15px 16px 16px; margin-bottom: 15px;
+  box-shadow: var(--shadow-sm); animation: rise .25s ease both;
 }
-.form-menu h3 { font-family: var(--font-display); font-size: 1rem; color: var(--espresso); margin-bottom: 2px; }
+.form-menu h3 {
+  font-family: var(--font-display); font-size: 1.08rem; color: var(--espresso);
+  display: flex; align-items: center; gap: 8px; margin-bottom: 7px;
+}
+.form-menu h3 i { color: var(--daun); font-size: .88em; } /* ikon plus/pensil di judul */
+.form-menu textarea { min-height: 64px; } /* deskripsi gak kecil mepet */
 .duo-field { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cek-tersedia { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; font-size: .86rem; color: var(--coklat); cursor: pointer; }
+.cek-tersedia {
+  display: flex; align-items: center; gap: 9px; width: fit-content;
+  margin-top: 13px; padding: 9px 13px; border-radius: 11px;
+  font-weight: 700; font-size: .86rem; color: var(--coklat); cursor: pointer;
+  background: rgba(55, 181, 115, .13); border: 1px solid rgba(55, 181, 115, .45); /* chip ijo = "tersedia" */
+  transition: background .13s ease;
+}
+.cek-tersedia:hover { background: rgba(55, 181, 115, .22); }
 .cek-tersedia input { width: 17px; height: 17px; accent-color: var(--daun); }
+.form-menu .aksi-media { margin-top: 15px; }
+
+/* tombol kaca di dalem kartu terang (admin, section QRIS):
+   versi coklat — gaya kaca gelap cuma buat latar gelap */
+.media-kartu .btn-kaca, .kartu-form .btn-kaca {
+  background: rgba(42, 24, 16, .06); color: var(--coklat); border: 1px solid rgba(42, 24, 16, .22);
+}
+.media-kartu .btn-kaca:hover, .kartu-form .btn-kaca:hover { background: rgba(42, 24, 16, .13); }
 
 /* ── Section foto QRIS setelah pesenan dibuat (pesen.html) ── */
 .qris-bayar { animation: rise .3s ease both; }
