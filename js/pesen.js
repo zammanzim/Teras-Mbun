@@ -72,7 +72,6 @@ const Pesen = (function () {
       grid.innerHTML = '<p class="kosong">Belum ada menu nih.</p>';
       return;
     }
-    const anim = renderPertama; // entrance animasi cuma pas load pertama
     // kelompokin per kategori
     const peta = new Map();
     daftar.forEach((m) => {
@@ -92,6 +91,7 @@ const Pesen = (function () {
   }
 
   function kartuPilih(m, ix) {
+    const anim = renderPertama; // entrance animasi cuma pas load pertama
     const q = draf.get(m.id) || 0;
     const lvlNow = lvlDraf.get(m.id) || 0;
     const komit = ada(m.id);
@@ -363,7 +363,7 @@ const Pesen = (function () {
       daftar = await TmDb.muatMenu();
       renderSemua();
     } catch (err) {
-      document.getElementById("gridPilih").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
+      document.getElementById("gridPilih").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';        
       showToast(TmDb.pesanRamah(err), "error");
     }
     try {
