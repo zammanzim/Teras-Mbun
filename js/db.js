@@ -18,6 +18,9 @@ const TmDb = (function () {
   function pesanRamah(err) {
     const m = String((err && err.message) || "");
     if (m.includes("nama_kosong")) return "Isi nama dulu ya.";
+    if (m.includes("harga_salah")) return "Harga belum bener (angka 0 ke atas).";
+    if (m.includes("kategori_kosong")) return "Isi kategorinya dulu.";
+    if (m.includes("menu_tidak_ada")) return "Menu itu udah gak ada.";
     if (m.includes("keranjang_kosong")) return "Belum ada menu yang dipilih.";
     if (m.includes("menu_tidak_tersedia")) return "Ada menu yang lagi gak tersedia.";
     if (m.includes("ambil_kosong")) return "Pilih mau diantar atau ambil sendiri.";
@@ -37,6 +40,17 @@ const TmDb = (function () {
         .from("menu")
         .select("id,nama,harga,kategori,urutan,gambar,deskripsi")
         .order("urutan", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+
+    // Versi ADMIN: lewat RPC daftar_menu() (security definer) —
+    // balikin SEMUA menu termasuk yang habis, plus kolom tersedia.
+    // SELECT biasa ke table menu lewat RLS ngefilter menu habis
+    // (emang buat pelanggan), jadi admin butuh ini biar menu habis
+    // tetep keliatan & bisa dibalikin statusnya.
+    async muatMenuAdmin() {
+      const { data, error } = await supa.rpc("daftar_menu");
       if (error) throw error;
       return data || [];
     },
@@ -145,6 +159,32 @@ const TmDb = (function () {
     async ubahMedia(key, url, pin) {
       const { data, error } = await supa.rpc("ubah_media", {
         p_key: key, p_gambar: url || "", p_pin: String(pin || ""),
+      });
+      if (error) throw error;
+      return !!data;
+    },
+
+    // ── CRUD menu (admin, wajib PIN) ──
+    // id kosong/null → menu baru; urutan kosong → paling bawah.
+    // Balikan: {id} sukses, null = PIN salah.
+    async simpanMenu({ id, nama, harga, kategori, deskripsi, urutan, tersedia }, pin) {
+      const { data, error } = await supa.rpc("simpan_menu", {
+        p_id: id || null,
+        p_nama: nama || "",
+        p_harga: harga == null || harga === "" ? null : Number(harga),
+        p_kategori: kategori || "",
+        p_deskripsi: deskripsi || "",
+        p_urutan: urutan == null || urutan === "" ? null : Number(urutan),
+        p_tersedia: tersedia !== false,
+        p_pin: String(pin || ""),
+      });
+      if (error) throw error;
+      return data; // {id} atau null (PIN salah)
+    },
+
+    async hapusMenu(id, pin) {
+      const { data, error } = await supa.rpc("hapus_menu", {
+        p_id: id, p_pin: String(pin || ""),
       });
       if (error) throw error;
       return !!data;

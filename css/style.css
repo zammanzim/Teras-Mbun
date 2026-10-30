@@ -442,7 +442,8 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
 }
 .tag-qris { background: rgba(47, 158, 99, .12); color: #1e7a4a; border-color: rgba(47, 158, 99, .35); }
 
-/* ── Halaman foto (foto.html): kelola foto bg, qris, menu ── */
+/* ── Halaman admin (admin.html): kelola menu + foto bg/qris ── */
+.head-media { display: flex; align-items: center; justify-content: space-between; gap: 9px; flex-wrap: wrap; }
 .media-kartu {
   background: rgba(255, 251, 244, 0.95); color: var(--ink);
   border: 1px solid var(--glass-line); border-radius: var(--r);
@@ -474,8 +475,25 @@ input:focus, textarea:focus { outline: none; border-color: var(--amber); box-sha
 .info-foto { flex: 1; min-width: 0; }
 .info-foto b { display: block; font-size: .95rem; }
 .info-foto small { color: var(--muted); font-weight: 600; }
-.aksi-foto { display: flex; align-items: center; gap: 7px; }
+.aksi-foto { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.aksi-foto .btn-kecil { padding: 7px 9px; } /* ikon doang biar muat 4 tombol di HP */
 .btn-foto { background: rgba(42, 24, 16, .08); color: var(--coklat); border: 1px solid rgba(42, 24, 16, .16); }
+.info-foto small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.baris-foto.habis { opacity: .62; } /* menu habis → baris agak pudar */
+.badge-habis {
+  display: inline-block; vertical-align: 2px; font-size: .62rem; font-weight: 800;
+  background: #b53a1c; color: #fff; border-radius: 999px; padding: 2px 8px; letter-spacing: .4px;
+}
+
+/* form tambah/edit menu di dalem kartu */
+.form-menu {
+  background: rgba(42, 24, 16, .05); border: 1px dashed rgba(42, 24, 16, .3);
+  border-radius: 14px; padding: 13px 14px; margin-bottom: 14px; animation: rise .25s ease both;
+}
+.form-menu h3 { font-family: var(--font-display); font-size: 1rem; color: var(--espresso); margin-bottom: 2px; }
+.duo-field { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cek-tersedia { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; font-size: .86rem; color: var(--coklat); cursor: pointer; }
+.cek-tersedia input { width: 17px; height: 17px; accent-color: var(--daun); }
 
 /* ── Section foto QRIS setelah pesenan dibuat (pesen.html) ── */
 .qris-bayar { animation: rise .3s ease both; }
