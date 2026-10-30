@@ -2,11 +2,25 @@
 // show-popup.js — popup universal pengganti alert/confirm
 // (varian slim dari osistarpanone, tanpa history-back koordinasi).
 //   await showPopup("Pesanan masuk!", "success")
+//   await showPopup("Pesanan masuk!", "success", { aksi: [...] })
+//     → success bisa nambah tombol aksi (mis. bagikan WA):
+//       aksi: [{ id, label, ikon, cls, onClick }] — klik → onClick() + resolve(id)
 //   await showPopup("Yakin?", "confirm") → true / false
 //   const v = await showPopup("Isi nama", "form", { fields: [...] }) → objek / null
 // fields: [{ name, label, type, placeholder, value, rows }]
 // Tutup: ESC / klik area kosong / tombol.
 // ============================================================
+
+// tombol buat tipe success: ada options.aksi → tombol aksi + "Nanti aja";
+// tanpa aksi → tombol OK biasa (kayak dulu)
+function tombolSucc(options) {
+  const aksi = options.aksi || [];
+  if (!aksi.length) return `<button class="uni-btn" id="uniBtnOk">OK</button>`;
+  return `<div class="uni-actions">
+    ${aksi.map((a) => `<button class="uni-btn ${a.cls || ""}" id="uniAksi_${a.id}"><i class="${a.ikon || "fa-solid fa-share"}"></i> ${a.label}</button>`).join("")}
+    <button class="uni-btn-cancel" id="uniBtnNo">${options.labelTutup || "Nanti aja"}</button>
+  </div>`;
+}
 
 window.showPopup = function (msg, type = "info", options = {}) {
   return new Promise((resolve) => {
@@ -23,7 +37,7 @@ window.showPopup = function (msg, type = "info", options = {}) {
 
     if (type === "success") {
       iconClass += " success"; iconHtml = '<i class="fa-solid fa-check"></i>';
-      btnsHtml = `<button class="uni-btn" id="uniBtnOk">OK</button>`;
+      btnsHtml = tombolSucc(options);
     } else if (type === "error") {
       iconClass += " error"; iconHtml = '<i class="fa-solid fa-xmark"></i>';
       btnsHtml = `<button class="uni-btn" id="uniBtnOk">OK</button>`;
@@ -69,7 +83,8 @@ window.showPopup = function (msg, type = "info", options = {}) {
     document.body.appendChild(overlay);
     setTimeout(() => overlay.classList.add("active"), 10);
 
-    const nilaiBatal = (type === "confirm" || type === "form") ? false : true;
+    const aksiSucc = type === "success" ? (options.aksi || []) : [];
+    const nilaiBatal = (type === "confirm" || type === "form" || aksiSucc.length) ? false : true;
 
     const close = (result) => {
       overlay.classList.remove("active");
@@ -105,6 +120,16 @@ window.showPopup = function (msg, type = "info", options = {}) {
 
     if (type === "confirm" || type === "form") {
       document.getElementById("uniBtnYes").onclick = () => close(true);
+      document.getElementById("uniBtnNo").onclick = () => close(false);
+      overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+    } else if (aksiSucc.length) {
+      // success + aksi: klik aksi → jalanin onClick lalu tutup; "Nanti aja" → resolve false
+      aksiSucc.forEach((a) => {
+        document.getElementById("uniAksi_" + a.id).onclick = () => {
+          if (a.onClick) { try { a.onClick(); } catch (err) {} }
+          close(a.id);
+        };
+      });
       document.getElementById("uniBtnNo").onclick = () => close(false);
       overlay.onclick = (e) => { if (e.target === overlay) close(false); };
     } else {

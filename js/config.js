@@ -9,5 +9,8 @@ const TM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 // Skema Supabase khusus project ini (lihat db/001-terasmbun.sql)
 const TM_SCHEMA = "terasmbun";
 
+// Bucket Supabase Storage buat foto (bg + foto menu; lihat db/007-media-storage.sql)
+const TM_BUCKET = "terasmbun-media";
+
 // Kunci storage
 const TM_PIN_KEY = "tm_pin";               // PIN dapur sesudah verifikasi (sessionStorage)

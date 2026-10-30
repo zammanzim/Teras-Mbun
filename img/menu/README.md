@@ -1,14 +1,17 @@
-# img/menu/
+# img/menu/ (arsip foto asli)
 
-Foto per menu, satu file per menu. Dianjurkan:
-- Rasio **16:10** (lebar), mis. 1200×750 px — pas sama kotaknya.
-- Nama file gampang dikenali, mis. `ayam-penyet.jpg`, `es-teh.jpg`.
+Foto menu **udah pindah ke Supabase Storage** — bucket `terasmbun-media`,
+dipakai lewat kolom `gambar` di tabel `terasmbun.menu`.
 
-Isi kolom `gambar` di Supabase (SQL Editor):
+Cara ganti foto menu sekarang (gak perlu SQL):
+1. Buka `dapur.html`, masukin PIN.
+2. Klik tombol **kamera** (atas) — panel "Foto Menu" muncul.
+3. Klik **Pasang / Ganti** di menu yang mau — pilih foto dari galeri.
+   Foto otomatis dikompres di browser (maks. 1200px, JPEG) sebelum diupload.
 
-```sql
-update terasmbun.menu set gambar = 'img/menu/ayam-penyet.jpg' where id = 1;
-```
+File di folder ini cuma **arsip foto asli** (sebelum dikompres & diupload) —
+gak dipakai lagi sama web. Aman dihapus kalo lo mau, tapi disimpen dulu
+siapa tau butuh foto versi penuh lagi.
 
 Belum ada foto? Gak masalah — otomatis tampil placeholder
 (gradient coklat + emoji kategori) di web.

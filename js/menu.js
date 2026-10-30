@@ -102,7 +102,10 @@ const Menu = (function () {
 
   function renderHasilStatus(box, p) {
     const items = Array.isArray(p.items) ? p.items : [];
-    const lvl = p.level_pedas > 0 ? `<li>🌶️ Level pedas: <b>${esc(p.level_pedas)}</b></li>` : "";
+    // level nempel per item; baris global cuma buat data lama
+    const adaLevelItem = items.some((i) => i.level > 0);
+    const lvl = (!adaLevelItem && p.level_pedas > 0)
+      ? `<li>🌶️ Level pedas: <b>${esc(p.level_pedas)}</b></li>` : "";
     const ambil = p.metode_ambil
       ? `<li>${p.metode_ambil === "cod" ? "🛵 Diantar ke rumah" : "🏪 Ambil di toko"}</li>` : "";
     const bayar = p.metode_bayar ? `<li>💳 Bayar: <b>${p.metode_bayar === "qris" ? "QRIS" : "Tunai"}</b></li>` : "";
@@ -110,7 +113,7 @@ const Menu = (function () {
     box.innerHTML = `
       <span class="pill-status st-${esc(p.status)}"><i class="fa-solid ${IKON_STATUS[p.status] || "fa-circle-info"}"></i> ${LABEL_STATUS[p.status] || esc(p.status)}</span>
       <ul class="daftar-item">
-        ${items.map((i) => `<li>• ${esc(i.nama || "Menu")} ${esc(i.qty || 1)}x</li>`).join("")}
+        ${items.map((i) => `<li>• ${esc(i.nama || "Menu")} ${esc(i.qty || 1)}x${i.level > 0 ? ` 🌶️<b>${esc(i.level)}</b>` : ""}</li>`).join("")}
         ${lvl}${ambil}${bayar}
         <li><b>Total: ${rupiah(p.total)}</b></li>
       </ul>`;

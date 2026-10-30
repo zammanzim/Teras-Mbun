@@ -1,11 +1,16 @@
-# img/
+# img/ (arsip foto asli)
 
-Taruh foto background di sini.
+Foto background **udah pindah ke Supabase Storage** — bucket `terasmbun-media`,
+dipakai langsung oleh `css/style.css` (blok `body::before`) lewat URL publik:
 
-- **`bg.jpg`** (atau `bg.png`) — foto utama yang jadi latar seluruh web.
-  Idealnya foto warung / masakan lo sendiri, resolusi agak gede (mis. 1920px),
-  komposisi bebas — nanti otomatis ke-`cover` + di-temper overlay hangat.
+```
+https://<project>.supabase.co/storage/v1/object/public/terasmbun-media/bg.jpg
+```
 
-Udah disetel di `css/style.css` (blok `body::before`).
-Selama fotonya belum ada, tampilannya otomatis pakai gradient hangat — jadi
-tetep keliatan rapi walaupun belum lo taruh.
+File di folder ini cuma **arsip foto asli** (sebelum dikompres & diupload) —
+gak dipakai lagi sama web. Aman dihapus kalo lo mau, tapi disimpen dulu
+siapa tau butuh foto versi penuh lagi.
+
+Cara ganti foto background: upload foto baru ke bucket (mis. lewat SQL Editor /
+Storage dashboard Supabase, atau tambahin `bg-v2.jpg` terus update URL di
+`css/style.css`).

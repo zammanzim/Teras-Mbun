@@ -31,36 +31,29 @@
 
     <form id="formPesen" novalidate>
       <!-- 1. Pilih menu -->
-      <fieldset class="kartu-form">
-        <legend><span class="no">1</span> Pilih menu</legend>
-        <div class="grid" id="gridPilih">
+      <div class="kartu-form">
+        <h2 class="kartu-judul"><span class="no">1</span> Pilih menu</h2>
+        <div class="pilih-grid" id="gridPilih">
           <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
         </div>
-      </fieldset>
+      </div>
 
-      <!-- 2. Level pedas (muncul cuma kalo ada makanan yang dipilih) -->
-      <fieldset class="kartu-form" id="langkahLevel" hidden>
-        <legend><span class="no">2</span> Level pedas 🌶️</legend>
-        <p class="bantuan">Buat makanan yang lo pilih. Minuman gak ngaruh.</p>
-        <div class="opsi-grid" id="opsiLevel"></div>
-      </fieldset>
-
-      <!-- 3. Data kamu -->
-      <fieldset class="kartu-form">
-        <legend><span class="no">3</span> Data kamu</legend>
+      <!-- 2. Data kamu -->
+      <div class="kartu-form">
+        <h2 class="kartu-judul"><span class="no">2</span> Data kamu</h2>
         <label class="field">
           <span>Nama *</span>
-          <input type="text" id="inNama" placeholder="mis. Budi" autocomplete="name" maxlength="60">
+          <input type="text" id="inNama" placeholder="Masukin nama" autocomplete="name" maxlength="60">
         </label>
         <label class="field">
           <span>No. WA *</span>
-          <input type="tel" id="inWa" placeholder="08xxxxxxxxxx" autocomplete="tel" inputmode="tel" maxlength="20">
+          <input type="tel" id="inWa" placeholder="08xx-xxxx-xxxx" autocomplete="tel" inputmode="tel" maxlength="20">
         </label>
-      </fieldset>
+      </div>
 
-      <!-- 4. Cara terima -->
-      <fieldset class="kartu-form">
-        <legend><span class="no">4</span> Mau diantar atau ambil sendiri?</legend>
+      <!-- 3. Cara terima -->
+      <div class="kartu-form">
+        <h2 class="kartu-judul"><span class="no">3</span> Mau diantar atau ambil sendiri?</h2>
         <div class="opsi-grid" id="opsiAmbil">
           <label class="opsi">
             <input type="radio" name="ambil" value="cod">
@@ -79,11 +72,11 @@
           <span>Alamat buat diantar *</span>
           <textarea id="inAlamat" rows="3" placeholder="Jl., nomor rumah, patokan…" maxlength="300"></textarea>
         </label>
-      </fieldset>
+      </div>
 
-      <!-- 5. Bayar -->
-      <fieldset class="kartu-form">
-        <legend><span class="no">5</span> Bayar pakai apa?</legend>
+      <!-- 4. Bayar -->
+      <div class="kartu-form">
+        <h2 class="kartu-judul"><span class="no">4</span> Bayar pakai apa?</h2>
         <div class="opsi-grid" id="opsiBayar">
           <label class="opsi">
             <input type="radio" name="bayar" value="qris">
@@ -98,7 +91,7 @@
             <small>bayar pas ambil</small>
           </label>
         </div>
-      </fieldset>
+      </div>
 
       <!-- Ringkasan -->
       <div class="ringkas" id="ringkas">

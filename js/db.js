@@ -66,7 +66,8 @@ const TmDb = (function () {
     },
 
     // ── nulis (RPC, wajib validasi server-side) ──
-    // items: [{id, qty}] — total dihitung ulang oleh Postgres
+    // items: [{id, qty, level}] — level 0..5 per item (minuman dipaksa 0
+    // server); total + level_pedas (tertinggi) dihitung ulang oleh Postgres
     // ambil: "cod" (diantar) | "ambil" (nyamperin ke toko)
     // bayar: "qris" | "tunai" — alamat wajib kalo ambil = "cod"
     async kirimPesanan({ nama, wa, catatan, items, level, ambil, alamat, bayar }) {
@@ -96,6 +97,56 @@ const TmDb = (function () {
       });
       if (error) throw error;
       return !!data;
+    },
+
+    // ── foto menu (Supabase Storage, bucket terasmbun-media) ──
+    // Kompres dulu di browser: sisi terpanjang dibatasi + dikirim sebagai
+    // JPEG — foto dari HP biasanya 3-8MB, sesudah kompres tinggal ~100KB.
+    async kompresFoto(file, sisiMaks = 1200, kualitas = 0.7) {
+      const bitmap = await createImageBitmap(file); // EXIF rotasi dihormati browser
+      const skala = Math.min(1, sisiMaks / Math.max(bitmap.width, bitmap.height));
+      const lebar = Math.round(bitmap.width * skala);
+      const tinggi = Math.round(bitmap.height * skala);
+      const kanvas = document.createElement("canvas");
+      kanvas.width = lebar;
+      kanvas.height = tinggi;
+      kanvas.getContext("2d").drawImage(bitmap, 0, 0, lebar, tinggi);
+      if (bitmap.close) bitmap.close();
+      const blob = await new Promise((res) => kanvas.toBlob(res, "image/jpeg", kualitas));
+      if (!blob) throw new Error("gagal_kompres");
+      return blob;
+    },
+
+    // Upload foto kompres ke bucket; nama file pakai stempel waktu biar
+    // URL publiknya selalu baru (gak ketimpa cache browser/CDN).
+    async uploadFotoMenu(idMenu, blob) {
+      const nama = `menu-${idMenu}-${Date.now()}.jpg`;
+      const { error } = await supa.storage.from(TM_BUCKET).upload(nama, blob, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
+      if (error) throw error;
+      return supa.storage.from(TM_BUCKET).getPublicUrl(nama).data.publicUrl;
+    },
+
+    // Simpan URL foto ke kolom menu.gambar — wajib PIN, URL divalidasi
+    // server (harus dari bucket terasmbun-media).
+    async ubahMenuGambar(idMenu, url, pin) {
+      const { data, error } = await supa.rpc("ubah_menu_gambar", {
+        p_id: idMenu, p_gambar: url || "", p_pin: String(pin || ""),
+      });
+      if (error) throw error;
+      return !!data;
+    },
+
+    // Buang file lama di bucket (best-effort) biar gak numpuk —
+    // cuma nyentuh file milik bucket ini, gak bakal nyentuh file lain.
+    async hapusFotoLama(url) {
+      const tanda = "/storage/v1/object/public/" + TM_BUCKET + "/";
+      const i = String(url || "").indexOf(tanda);
+      if (i < 0) return; // URL di luar bucket kita — biarin
+      const nama = decodeURIComponent(url.slice(i + tanda.length).split("?")[0]);
+      await supa.storage.from(TM_BUCKET).remove([nama]);
     },
 
     // ── realtime (update daftar dapur / status customer) ──
