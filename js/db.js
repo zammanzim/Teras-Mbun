@@ -26,6 +26,8 @@ const TmDb = (function () {
     if (m.includes("ambil_kosong")) return "Pilih mau diantar atau ambil sendiri.";
     if (m.includes("alamat_kosong")) return "Isi alamatnya dulu (buat pesenan diantar).";
     if (m.includes("bayar_kosong")) return "Pilih mau bayar QRIS atau tunai.";
+    if (m.includes("kapan_salah")) return "Pilih mau dikirim kapan.";
+    if (m.includes("waktu_kirim_kosong")) return "Tulis jam kirimnya dulu ya.";
     if (m.includes("Failed to fetch")) return "Koneksi lagi mati. Coba lagi nanti.";
     return m ? "Gagal: " + m : "Ada yang salah nih.";
   }
@@ -63,14 +65,20 @@ const TmDb = (function () {
       return data || [];
     },
 
-    async cariPesanan(kode) {
+    // Ambil SATU pesanan lewat kode (buat halaman pesenan-aku).
+    // Anon emang dibolehin baca tabel pesanan (policy pesanan_baca) —
+    // kode diketik/share sama pelanggan, gak ada data rahasia di dalemnya.
+    async muatPesananByKode(kode) {
+      const k = String(kode || "").trim();
+      if (!k) return null;
       const { data, error } = await supa
         .from("pesanan")
         .select("*")
-        .eq("kode", String(kode || "").trim())
-        .maybeSingle();
+        .eq("kode", k)
+        .order("created_at", { ascending: false })
+        .limit(1);
       if (error) throw error;
-      return data; // null kalau gak ketemu
+      return (data && data[0]) || null;
     },
 
     async infoWarung() {
@@ -84,7 +92,8 @@ const TmDb = (function () {
     // server); total + level_pedas (tertinggi) dihitung ulang oleh Postgres
     // ambil: "cod" (diantar) | "ambil" (nyamperin ke toko)
     // bayar: "qris" | "tunai" — alamat wajib kalo ambil = "cod"
-    async kirimPesanan({ nama, wa, catatan, items, level, ambil, alamat, bayar }) {
+    // kapan: "sekarang" | "besok" | "custom" — waktuTeks wajib kalo custom
+    async kirimPesanan({ nama, wa, catatan, items, level, ambil, alamat, bayar, kapan, waktuTeks }) {
       const { data, error } = await supa.rpc("buat_pesanan", {
         p_nama: nama || "",
         p_wa: wa || "",
@@ -94,9 +103,11 @@ const TmDb = (function () {
         p_ambil: ambil || "",
         p_alamat: alamat || "",
         p_bayar: bayar || "",
+        p_kapan: kapan || "sekarang",
+        p_waktu_teks: waktuTeks || null,
       });
       if (error) throw error;
-      return data; // {id, kode, total}
+      return data; // {id, kode, total, ongkir}
     },
 
     async cekPin(pin) {

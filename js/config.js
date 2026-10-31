@@ -14,3 +14,7 @@ const TM_BUCKET = "terasmbun-media";
 
 // Kunci storage
 const TM_PIN_KEY = "tm_pin";               // PIN dapur sesudah verifikasi (sessionStorage)
+
+// Kata kunci/alamat toko di Google Maps (opsi "Ambil di toko" di pesen.html).
+// Ganti jadi alamat lengkap atau koordinat ("-6.xxxx, 107.xxxx") kalo udah ada.
+const TM_GMAPS = "Teras Mbun";

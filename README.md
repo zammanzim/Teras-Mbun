@@ -11,15 +11,17 @@ Deploy: **GitHub Pages** (`terasmbun.github.io`).
 ## Struktur
 
 ```
-index.html            # sisi customer: hero, showcase menu, cek status
+index.html            # sisi customer: hero, showcase menu (semua menu tampil)
 pesen.html            # halaman pesen: kartu menu per kategori + keranjang + form
+pesenan-aku.html      # halaman pesenan ku: detail + status live + foto QRIS
 dapur.html            # sisi admin dapur: gate PIN, daftar realtime, ceklis status
 admin.html            # sisi admin: gate PIN, kelola menu penuh + foto latar, QRIS, menu
 css/style.css         # design system (palet hangat coklat-krem-hijau)
 js/config.js          # URL + anon key Supabase (publik, aman)
 js/db.js              # layer DB: baca langsung, nulis via RPC, upload foto
 js/menu.js            # logic sisi customer (index)
-js/pesen.js           # logic halaman pesen (draf, keranjang, level per item, section QRIS)
+js/pesen.js           # logic halaman pesen (stepper langsung masuk keranjang, level per item)
+js/pesenan-aku.js     # logic halaman pesenan aku (kode → detail, patch status live)
 js/dapur.js           # logic sisi dapur
 js/admin.js           # logic halaman admin (CRUD menu + foto: kompres → upload → RPC PIN)
 js/toast.js           # toast bawaan (pola osistarpanone)
@@ -27,7 +29,7 @@ js/notice.js          # pill nempel (live / error)
 js/show-popup.js      # modal pengganti alert()
 sw.js                 # service worker PWA
 manifest.webmanifest
-db/001..009-*.sql     # migrasi (sudah ke-apply di Supabase)
+db/001..012-*.sql     # migrasi (sudah ke-apply di Supabase; 012 = ongkir COD +3000, gak fix)
 opencode.json         # config OpenCode: MCP Supabase nujuk ke project ini
 ```
 

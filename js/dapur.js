@@ -18,6 +18,18 @@ const Dapur = (function () {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const jam = (iso) => new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 
+  // jadwal kirim dari kolom kapan/waktu_teks — "" kalo "sekarang"
+  // (biar kartu dapur gak keabisan tag buat pesenan normal)
+  function teksJadwal(p) {
+    if (p.kapan === "besok") {
+      const b = new Date(p.created_at);
+      b.setDate(b.getDate() + 1);
+      return "Besok, " + b.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" });
+    }
+    if (p.kapan === "custom" && p.waktu_teks) return p.waktu_teks; // teks bebas user
+    return "";
+  }
+
   // ── gerbang PIN ──
   async function cobaMasuk() {
     const input = document.getElementById("inputPin");
@@ -96,6 +108,9 @@ const Dapur = (function () {
       ? `<span class="tag-info ${p.metode_bayar === "qris" ? "tag-qris" : ""}"><i class="fa-solid ${p.metode_bayar === "qris" ? "fa-qrcode" : "fa-money-bill-wave"}"></i> ${p.metode_bayar === "qris" ? "QRIS" : "Tunai"}</span>` : "";
     const alamat = p.metode_ambil === "cod" && p.alamat
       ? `<p class="catatan"><i class="fa-solid fa-location-dot"></i> ${esc(p.alamat)}</p>` : "";
+    // jadwal kirim non-"sekarang" ditampilin di atas biar keliatan duluan
+    const jadwal = teksJadwal(p)
+      ? `<p class="catatan jadwal"><i class="fa-regular fa-calendar"></i> Diantar <b>${esc(teksJadwal(p))}</b></p>` : "";
     // tombol aksi sesuai status
     let aksi = "";
     if (p.status === "menunggu") {
@@ -111,6 +126,7 @@ const Dapur = (function () {
         <span class="pembeli">${esc(p.nama)}</span>
         <span class="jam"><i class="fa-regular fa-clock"></i> ${jam(p.created_at)}</span>
       </div>
+      ${jadwal}
       <ul class="daftar-item">
         ${items.map((i) => `<li>• ${esc(i.nama || "Menu")} <b>${esc(i.qty || 1)}x</b>${i.level > 0 ? ` <b class="lvl-item">🌶️${esc(i.level)}</b>` : ""}</li>`).join("")}
       </ul>
@@ -118,6 +134,7 @@ const Dapur = (function () {
       ${alamat}
       ${p.catatan ? `<p class="catatan"><i class="fa-solid fa-comment-dots"></i> ${esc(p.catatan)}</p>` : ""}
       <div class="tag-wrap">${ambil}${bayar}</div>
+      ${p.ongkir > 0 ? `<p class="catatan"><i class="fa-solid fa-truck"></i> Ongkir <b>${rupiah(p.ongkir)}</b> <span class="muted-kecil">(gak fix — bisa beda deket/jauh)</span></p>` : ""}
       <p class="total">${rupiah(p.total)}</p>
       <div class="aksi">${aksi}</div>
     </div>`;
@@ -152,6 +169,7 @@ const Dapur = (function () {
       const extra = [
         p.metode_ambil === "cod" ? "COD" : p.metode_ambil === "ambil" ? "Ambil" : "",
         p.metode_bayar ? p.metode_bayar.toUpperCase() : "",
+        teksJadwal(p), // jadwal non-"sekarang"
         // Lv di extra cuma buat data lama (item blom bawa level sendiri)
         !adaLevelItem && p.level_pedas > 0 ? `Lv${p.level_pedas}` : "",
       ].filter(Boolean).join(" · ");

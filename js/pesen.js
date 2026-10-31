@@ -1,7 +1,7 @@
 // ============================================================
 // pesen.js — halaman PESAN (form).
-// Alur: pilih menu (per kartu: foto + stepper + level pedas
-// buat makanan + "Masukkan Keranjang") → nama & WA
+// Alur: pilih menu (per kartu: foto + stepper − qty + yang LANGSUNG
+// masuk keranjang + level pedas buat makanan) → nama & WA
 // → diantar (cod) atau ambil di toko → QRIS/tunai → kirim.
 // Validasi berat ada di server (RPC), sini cuma ngecek cepet.
 // ============================================================
@@ -10,13 +10,8 @@ const Pesen = (function () {
   "use strict";
 
   let daftar = [];        // isi tabel menu
-  let draf = new Map();   // qty draft per kartu (id → qty) — blom masuk keranjang
-  let lvlDraf = new Map();// level pedas draft per kartu (id → 0..5)
+  let lvlDraf = new Map();// level pedas pilihan per kartu (id → 0..5)
   let keranjang = [];     // committed: [{id, nama, harga, qty, level}]
-  let waPenjual = "";
-  let fotoQris = "";      // URL foto QRIS dari setting (kosong = belum ada)
-  let kodeTerakhir = "";  // kode pesenan terakhir (buat tombol WA di section QRIS)
-  let totalTerakhir = 0;
   let renderPertama = true; // animasi entrance cuma sekali
 
   const LEVEL = [
@@ -49,6 +44,18 @@ const Pesen = (function () {
   const total = () => keranjang.reduce((s, i) => s + i.qty * i.harga, 0);
   const jml = () => keranjang.reduce((s, i) => s + i.qty, 0);
 
+  // ── ongkir COD ──
+  // angka AWAL aja — server (RPC buat_pesanan) yang nentuin final,
+  // UI cuma nampilin + keterangan "gak fix" (bisa beda deket/jauh).
+  // KALAU NGUBAH ANGKA INI: samain sama db/012-ongkir-cod.sql (3000).
+  const ONGKIR_COD = 3000;
+  const ongkir = () => (nilai("ambil") === "cod" ? ONGKIR_COD : 0);
+  const totalBayar = () => total() + ongkir();
+
+  // level pedas terpilih — default MID (2) kalo belum pernah disentuh
+  const LVL_AWAL = 2;
+  const lvlAt = (id) => (lvlDraf.has(id) ? lvlDraf.get(id) : LVL_AWAL);
+
   // makanan = kategori bukan minuman — level pedas cuma nongol di kartu ini
   const isMakanan = (id) => {
     const m = daftar.find((x) => x.id === id);
@@ -60,9 +67,8 @@ const Pesen = (function () {
     ({ nasi: "🍚", minuman: "🥤", lauk: "🍗", lauk_pauk: "🍗", snack: "🍘" }[String(k || "").toLowerCase()]) || "🍽️";
 
   // ── render kartu menu ──
-  // 1 kartu = 1 menu: foto, nama+harga, stepper − qty +,
-  // level pedas (selalu tampil, disabled kalo qty 0),
-  // tombol "✕ Batalin" & "Masukkan Keranjang".
+  // 1 kartu = 1 menu: foto, nama+harga, stepper − qty + (LANGSUNG masuk
+  // keranjang), level pedas (khusus makanan, selalu tampil).
   // Kartu dikelompokin per kategori, gaya sama kaya halaman utama.
   const labelKat = (k) => String(k || "lain").replace(/_/g, " ");
 
@@ -92,26 +98,21 @@ const Pesen = (function () {
 
   function kartuPilih(m, ix) {
     const anim = renderPertama; // entrance animasi cuma pas load pertama
-    const q = draf.get(m.id) || 0;
-    const lvlNow = lvlDraf.get(m.id) || 0;
-    const komit = ada(m.id);
-    const sinkron = komit && komit.qty === q && (komit.level || 0) === lvlNow; // sama semua
+    const q = ada(m.id) ? ada(m.id).qty : 0;
+    const lvlNow = lvlAt(m.id);
     const adaFoto = !!m.gambar;
-    const aktif = !!(q || komit); // qty draft atau udah masuk keranjang
-    const labelMasuk = sinkron
-      ? '<i class="fa-solid fa-check"></i> Di keranjang'
-      : komit ? "Update" : '<i class="fa-solid fa-cart-plus"></i> Keranjang';
     // level pedas per kartu — khusus makanan, SELALU tampil;
-    // kalo qty-nya 0 chips-nya disabled (sama kayak tombol batal/masuk)
+    // kalo qty-nya 0 chips-nya disabled
     const levelBaris = isMakanan(m.id) ? `
-      <div class="level-baris${aktif ? "" : " mati"}">
+      <div class="level-baris${q ? "" : " mati"}">
         <span class="lvl-label"><i class="fa-solid fa-pepper-hot"></i> Pedas</span>
         <div class="lvl-chips">
-          ${LEVEL.map((l) => `<button type="button" class="lvl-chip${lvlNow === l.v ? " aktif" : ""}"
-            data-level="${m.id}:${l.v}" aria-label="${l.label}" title="${l.label}" ${aktif ? "" : "disabled"}>${l.v}</button>`).join("")}
+          ${LEVEL.map((l) => `<button type="button" class="lvl-chip lv-${l.v}${lvlNow === l.v ? " aktif" : ""}"
+            data-level="${m.id}:${l.v}" aria-label="${l.label}" title="${l.label}" ${q ? "" : "disabled"}>${l.v}</button>`).join("")}
         </div>
       </div>` : "";
-    return `<div class="kartu-menu${sinkron ? " di-keranjang" : ""}${anim ? " anim" : ""}"
+    return `<div class="kartu-menu${q ? " di-keranjang" : ""}${anim ? " anim" : ""}"
+            data-kartu="${m.id}"
             ${anim ? `style="animation-delay:${ix * 30}ms"` : ""}>
       <div class="foto ${adaFoto ? "" : "kosong-foto"}">
         ${adaFoto
@@ -130,48 +131,63 @@ const Pesen = (function () {
         <button type="button" class="qty-btn" data-tambah="${m.id}" aria-label="Tambah ${esc(m.nama)}">+</button>
       </div>
       ${levelBaris}
-      <div class="tombol-kartu">
-        <button type="button" class="btn-batal" data-batal="${m.id}" aria-label="Batalin ${esc(m.nama)}" ${q || komit ? "" : "disabled"}>
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-        <button type="button" class="btn-masuk" data-masuk="${m.id}" ${q ? "" : "disabled"}>
-          ${labelMasuk}
-        </button>
-      </div>
     </div>`;
   }
 
   // ── aksi kartu ──
-  function ubahDraf(id, delta) {
-    const q = Math.max(0, Math.min(50, (draf.get(id) || 0) + delta));
-    if (q) draf.set(id, q); else draf.delete(id);
-    renderPilih();
+  // Stepper − / + LANGSUNG nulis ke keranjang (gak ada tombol "masuk
+  // keranjang" lagi). Patch SATU kartu doang tanpa render ulang grid —
+  // kalo grid di-innerHTMl ulang, SEMUA <img> dilepas+di-decode lagi
+  // tiap klik → foto pada kedip.
+  function patchKartu(id) {
+    const kartu = document.querySelector(`[data-kartu="${id}"]`);
+    if (!kartu) return; // grid belum ke-render (atau menu gagal muat)
+    const item = ada(id);
+    const q = item ? item.qty : 0;
+    const lvlNow = lvlAt(id);
+
+    kartu.classList.toggle("di-keranjang", q > 0);
+    kartu.querySelector(".qty-num").textContent = q;
+    kartu.querySelector("[data-kurang]").disabled = !q;
+
+    const baris = kartu.querySelector(".level-baris");
+    if (baris) {
+      baris.classList.toggle("mati", !q);
+      baris.querySelectorAll(".lvl-chip").forEach((chip) => {
+        const v = Number(chip.dataset.level.split(":")[1]);
+        chip.disabled = !q;
+        chip.classList.toggle("aktif", v === lvlNow);
+      });
+    }
+  }
+
+  function ubahQty(id, delta) {
+    const m = daftar.find((x) => x.id === id);
+    if (!m) return;
+    const item = ada(id);
+    const q = Math.max(0, Math.min(50, (item ? item.qty : 0) + delta));
+    if (!q) {
+      if (item) keranjang = keranjang.filter((i) => i.id !== id); // 0 = keluar keranjang
+    } else if (item) {
+      item.qty = q;
+    } else {
+      // pertama kali masuk: level = pilihan sekarang (default 2 / mid);
+      // minuman gak bawa level (server juga maksa 0)
+      keranjang.push({
+        id: m.id, nama: m.nama, harga: m.harga, qty: q,
+        level: isMakanan(id) ? lvlAt(id) : 0,
+      });
+    }
+    patchKartu(id);
     renderRingkas();
   }
 
   function ubahLevel(id, v) {
     lvlDraf.set(id, Math.max(0, Math.min(5, v)));
-    renderPilih();
+    const item = ada(id);
+    if (item) item.level = isMakanan(id) ? lvlDraf.get(id) : 0; // ikut kalo udah di keranjang
+    patchKartu(id);
     renderRingkas();
-  }
-
-  function batalKartu(id) {
-    draf.delete(id);
-    lvlDraf.delete(id);
-    keranjang = keranjang.filter((i) => i.id !== id);
-    renderSemua();
-  }
-
-  function masukKeranjang(id) {
-    const q = draf.get(id) || 0;
-    const m = daftar.find((x) => x.id === id);
-    if (!q || !m) return;
-    const lvl = isMakanan(id) ? (lvlDraf.get(id) || 0) : 0; // minuman gak bawa level
-    const komit = ada(id);
-    if (komit) { komit.qty = q; komit.level = lvl; }
-    else keranjang.push({ id: m.id, nama: m.nama, harga: m.harga, qty: q, level: lvl });
-    renderSemua();
-    showToast(`${esc(m.nama)} masuk keranjang`, "success");
   }
 
   function renderRingkas() {
@@ -183,14 +199,136 @@ const Pesen = (function () {
         <h2><i class="fa-solid fa-receipt"></i> Ringkasan</h2>
         <ul class="daftar-item">
           ${keranjang.map((i) => `<li><span>${esc(i.nama)} ${i.qty}x${i.level > 0 ? ` <b class="lvl-item">🌶️${i.level}</b>` : ""}</span><b>${rupiah(i.qty * i.harga)}</b></li>`).join("")}
-          <li class="rincian-total"><span>Total</span><b>${rupiah(total())}</b></li>
-        </ul>`;
+          ${ongkir() ? `<li class="rincian-ongkir"><span>Ongkir COD <i class="fa-solid fa-circle-info" title="gak fix"></i></span><b>+${rupiah(ongkir())}</b></li>` : ""}
+          <li class="rincian-total"><span>Total</span><b>${rupiah(totalBayar())}</b></li>
+        </ul>
+        ${ongkir() ? '<p class="catatan-ongkir kecil"><i class="fa-solid fa-motorcycle"></i> Ongkir gak fix ya — Rp3.000 cuma perkiraan awal, bisa berubah tergantung deket / jauh.</p>' : ""}`;
     }
     document.getElementById("barJml").textContent = jml() + " item";
-    document.getElementById("barTotal").textContent = rupiah(total());
+    document.getElementById("barTotal").textContent = rupiah(totalBayar());
   }
 
   function renderSemua() { renderPilih(); renderRingkas(); }
+
+  // ── wizard: 1 kartu tampil per langkah ──
+  // langkah 1..5 = form, 6 = konfirmasi (tombol kirim ada di dalem kartu,
+  // bar bawah sengaja disembunyiin di langkah 6 — ilang + gak ganggu)
+  const MAKS_LANGKAH = 6;
+  let langkah = 1;
+
+  const nilai = (nama) =>
+    (document.querySelector(`input[name="${nama}"]:checked`) || {}).value || "";
+
+  function tampilLangkah(n, gulir = true) {
+    langkah = Math.max(1, Math.min(MAKS_LANGKAH, n));
+    document.querySelectorAll("[data-langkah]").forEach((el) => {
+      el.hidden = Number(el.dataset.langkah) !== langkah;
+    });
+
+    // dots + caption indikator
+    document.querySelectorAll("#stepDots i").forEach((dot, ix) => {
+      dot.classList.toggle("aktif", ix < langkah - 1);   // udah dilewatin
+      dot.classList.toggle("kini", ix === langkah - 1);   // lagi di sini
+    });
+    document.getElementById("stepCap").textContent = `Langkah ${langkah} dari ${MAKS_LANGKAH}`;
+
+    // bar bawah: ilang di langkah konfirmasi, tombol ← ilang di langkah 1
+    document.getElementById("barKirim").hidden = langkah === MAKS_LANGKAH;
+    document.getElementById("btnBack").hidden = langkah === 1;
+
+    if (langkah === MAKS_LANGKAH) renderKonfirmasi(); // snapshot isi form
+
+    if (gulir) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function lanjut() {
+    if (!validLangkah(langkah)) return;
+    tampilLangkah(langkah + 1);
+  }
+  function mundur() { tampilLangkah(langkah - 1); }
+
+  // validasi isi SATU langkah; false = ada yang kurang
+  // (toast + fokus elemennya udah diurus di dalem)
+  function validLangkah(n) {
+    if (n === 1) {
+      if (!keranjang.length) { showToast("Pilih menu dulu ya.", "info"); return false; }
+      return true;
+    }
+    if (n === 2) {
+      const nama = document.getElementById("inNama").value.trim();
+      const wa = formatWa(normWa(document.getElementById("inWa").value));
+      if (!nama) { showToast("Isi nama dulu ya.", "error"); document.getElementById("inNama").focus(); return false; }
+      if (!wa) { showToast("Isi nomor WA dulu ya.", "error"); document.getElementById("inWa").focus(); return false; }
+      if (!/^08\d{9,12}$/.test(wa.replace(/\D/g, ""))) {
+        showToast("Nomor WA kayaknya belum bener (harus 08…).", "error");
+        document.getElementById("inWa").focus(); return false;
+      }
+      return true;
+    }
+    if (n === 3) {
+      const ambil = nilai("ambil");
+      if (!ambil) { showToast("Pilih mau diantar atau ambil sendiri.", "info"); document.getElementById("opsiAmbil").scrollIntoView({ behavior: "smooth", block: "center" }); return false; }
+      if (ambil === "cod" && !document.getElementById("inAlamat").value.trim()) {
+        showToast("Isi alamat buat diantar.", "error"); document.getElementById("inAlamat").focus(); return false;
+      }
+      return true;
+    }
+    if (n === 4) {
+      if (!nilai("bayar")) { showToast("Pilih mau bayar QRIS atau tunai.", "info"); document.getElementById("opsiBayar").scrollIntoView({ behavior: "smooth", block: "center" }); return false; }
+      return true;
+    }
+    if (n === 5) {
+      if (nilai("kapan") === "custom" && !document.getElementById("inWaktu").value.trim()) {
+        showToast("Tulis jam kirimnya dulu ya.", "error"); document.getElementById("inWaktu").focus(); return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  // teks jadwal kirim yang enak dibaca (kartu konfirmasi)
+  function teksKapan(kapan, waktuTeks) {
+    if (kapan === "besok") {
+      const b = new Date(Date.now() + 864e5);
+      return "Besok (" + b.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" }) + ")";
+    }
+    if (kapan === "custom" && waktuTeks) return waktuTeks; // teks bebas user ("jam 5 sore")
+    return "Sekarang";
+  }
+
+  // isi kartu konfirmasi: ringkasan (#ringkas) udah ke-render sendiri,
+  // sini cuma nambah baris info (nama, terima, bayar, jadwal)
+  function renderKonfirmasi() {
+    const nama = document.getElementById("inNama").value.trim();
+    const wa = formatWa(normWa(document.getElementById("inWa").value));
+    const ambil = nilai("ambil");
+    const bayar = nilai("bayar");
+    const kapan = nilai("kapan") || "sekarang";
+    const alamat = document.getElementById("inAlamat").value.trim();
+    const waktuTeks = document.getElementById("inWaktu").value.trim();
+
+    const baris = [];
+    if (nama) baris.push(["fa-solid fa-user", "Nama", nama]);
+    if (wa) baris.push(["fa-brands fa-whatsapp", "No. WA", wa]);
+    baris.push([ambil === "cod" ? "fa-solid fa-motorcycle" : "fa-solid fa-store",
+      "Terima", ambil === "cod" ? "Diantar (COD)" : "Ambil di toko"]);
+    if (ambil === "cod" && alamat) baris.push(["fa-solid fa-location-dot", "Alamat", alamat]);
+    if (ambil === "cod") baris.push(["fa-solid fa-truck", "Ongkir*", "+Rp3.000 (gak fix)"]);
+    if (bayar) baris.push([bayar === "qris" ? "fa-solid fa-qrcode" : "fa-solid fa-money-bill-wave",
+      "Bayar", bayar === "qris" ? "QRIS" : "Tunai"]);
+    baris.push(["fa-regular fa-calendar", "Diantar kapan", teksKapan(kapan, waktuTeks)]);
+
+    document.getElementById("konfInfo").innerHTML = baris.map(([ikon, label, nilaiTeks]) => `
+      <div class="aku-baris"><i class="${ikon}"></i>
+        <span class="lbl">${esc(label)}</span>
+        <span class="val">${esc(nilaiTeks)}</span>
+      </div>`).join("") +
+      (ambil === "cod"
+        ? `<p class="catatan-ongkir kecil"><i class="fa-solid fa-circle-info"></i>
+             *Ongkir <b>gak fix</b> — Rp3.000 cuma awal, bisa berubah
+             tergantung makin deket / makin jauh. Penjual yang konfirmasi.</p>`
+        : "");
+  }
 
   // ── pilihan opsi (level / ambil / bayar) + input WA ──
   function pasangOpsi() {
@@ -213,52 +351,54 @@ const Pesen = (function () {
     });
 
     // ganti state pilih di kartu opsi mana pun (CSS ngikutin class .pilih)
-    ["opsiAmbil", "opsiBayar"].forEach((id) => {
+    ["opsiAmbil", "opsiBayar", "opsiKapan"].forEach((id) => {
       document.getElementById(id).addEventListener("change", (e) => {
         const lbl = e.target.closest(".opsi");
         if (!lbl) return;
         lbl.parentElement.querySelectorAll(".opsi").forEach((o) => o.classList.toggle("pilih", o === lbl));
-        // alamat cuma muncul kalo COD
+        // alamat cuma muncul kalo COD; peta ilustrasi cuma muncul kalo ambil di toko
         if (e.target.name === "ambil") {
           const cod = e.target.value === "cod";
           document.getElementById("fieldAlamat").hidden = !cod;
           if (!cod) document.getElementById("inAlamat").value = "";
+          document.getElementById("petaToko").hidden = e.target.value !== "ambil";
+          document.getElementById("catatanOngkir").hidden = !cod; // keterangan ongkir
+          renderRingkas(); // total bar + ringkasan ikut +ongkir
+        }
+        // isian jam kirim cuma muncul kalo pilih "Pilih waktu"
+        if (e.target.name === "kapan") {
+          const custom = e.target.value === "custom";
+          document.getElementById("fieldWaktu").hidden = !custom;
+          if (!custom) document.getElementById("inWaktu").value = "";
         }
       });
     });
+
+    // tanggal besok buat label opsi "Besok" ("Min, 1 Nov")
+    document.getElementById("capBesok").textContent =
+      new Date(Date.now() + 864e5).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" });
   }
 
   // ── kirim ──
   async function kirim(e) {
     e.preventDefault();
-    if (!keranjang.length) { showToast("Pilih menu dulu ya.", "info"); return; }
+    // safety net: kirim cuma boleh jalan kalo SEMUA langkah lolos.
+    // (kirim tombolnya cuma ada di langkah konfirmasi, tapi jaga-jaga
+    //  misal user ngelewatin lewat devtools dll)
+    for (let n = 1; n < MAKS_LANGKAH; n++) {
+      if (!validLangkah(n)) { tampilLangkah(n); return; }
+    }
 
     const nama = document.getElementById("inNama").value.trim();
     const wa = formatWa(normWa(document.getElementById("inWa").value)); // biar konsisten sama tampilan
-    const ambil = (document.querySelector('input[name="ambil"]:checked') || {}).value || "";
-    const bayar = (document.querySelector('input[name="bayar"]:checked') || {}).value || "";
+    const ambil = nilai("ambil");
+    const bayar = nilai("bayar");
     const alamat = document.getElementById("inAlamat").value.trim();
-
-    if (!nama) { showToast("Isi nama dulu ya.", "error"); document.getElementById("inNama").focus(); return; }
-    if (!wa) { showToast("Isi nomor WA dulu ya.", "error"); document.getElementById("inWa").focus(); return; }
-    if (!/^08\d{9,12}$/.test(wa.replace(/\D/g, ""))) {
-      showToast("Nomor WA kayaknya belum bener (harus 08…).", "error");
-      document.getElementById("inWa").focus(); return;
-    }
-    if (!ambil) { showToast("Pilih mau diantar atau ambil sendiri.", "info"); document.getElementById("opsiAmbil").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
-    if (ambil === "cod" && !alamat) { showToast("Isi alamat buat diantar.", "error"); document.getElementById("inAlamat").focus(); return; }
-    if (!bayar) { showToast("Pilih mau bayar QRIS atau tunai.", "info"); document.getElementById("opsiBayar").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    const kapan = nilai("kapan") || "sekarang";
+    const waktuTeks = kapan === "custom" ? document.getElementById("inWaktu").value.trim() : null;
 
     const btn = document.getElementById("btnKirim");
     btn.disabled = true;
-    document.getElementById("qrisBayar").hidden = true; // section QRIS lama disembunyiin
-
-    // snapshot dulu (keranjang dibersihin sesudah sukses)
-    const ringkasTeks = keranjang
-      .map((i) => `• ${i.nama} ${i.qty}x${i.level > 0 ? ` (Pedas Lv${i.level})` : ""}`)
-      .join("%0A");
-    const ambilTeks = ambil === "cod" ? "Diantar (COD)" : "Ambil di toko";
-    const bayarTeks = bayar === "qris" ? "QRIS" : "Tunai";
 
     try {
       const res = await TmDb.kirimPesanan({
@@ -267,17 +407,15 @@ const Pesen = (function () {
         // level_pedas kolom = level tertinggi (buat ringkasan dapur/lama);
         // detail per item ada di dalam items
         level: keranjang.reduce((mx, i) => Math.max(mx, i.level || 0), 0),
-        ambil, alamat, bayar,
+        ambil, alamat, bayar, kapan, waktuTeks,
       });
-      sukses(res, ringkasTeks, alamat, ambilTeks, bayarTeks);
-      if (bayar === "qris") tampilQris(res); // section foto QRIS
-      keranjang = [];
-      draf.clear();
-      lvlDraf.clear();
-      document.getElementById("formPesen").reset();
-      document.getElementById("fieldAlamat").hidden = true;
-      document.querySelectorAll("#opsiAmbil .opsi, #opsiBayar .opsi").forEach((o) => o.classList.remove("pilih"));
-      renderSemua();
+      // gak ada popup di sini — langsung lempar ke halaman "Pesenan Aku"
+      // (snapshot disimpen dulu biar halaman barunya bisa gambar detail
+      //  tanpa nunggu jaringan, terus diganti data asli dari DB)
+      simpanLaluPergi(res, {
+        nama, ambil, alamat, bayar, kapan, waktuTeks,
+        items: keranjang.map((i) => ({ nama: i.nama, qty: i.qty, level: i.level || 0, harga: i.harga })),
+      });
     } catch (err) {
       showToast(TmDb.pesanRamah(err), "error");
     } finally {
@@ -285,44 +423,46 @@ const Pesen = (function () {
     }
   }
 
-  function sukses(res, rincian, alamat, ambilTeks, bayarTeks) {
-    // satu popup aja: info kode + tombol bagikan WA (gak ada popup kedua lagi)
-    const teks = `Halo, mau pesen di Teras Mbun.%0A` +
-      `Kode: *${res.kode}*%0A${rincian}%0ATotal: ${rupiah(res.total)}` +
-      `%0ATerima: ${ambilTeks}` + (alamat ? `%0AAlamat: ${alamat}` : "") +
-      `%0ABayar: ${bayarTeks}`;
+  // ── abis pesenan masuk: simpen snapshot + pindah halaman ──
+  // bentuk snapshot SAMA kaya baris tabel pesanan (render di halaman baru
+  // gak perlu tau bedanya data snapshot / data asli).
+  function simpanLaluPergi(res, f) {
+    const snap = {
+      kode: res.kode,
+      nama: f.nama,
+      status: "menunggu",
+      items: f.items,
+      total: res.total,
+      ongkir: res.ongkir || 0, // ongkir COD dari server (0 kalo ambil di toko)
+      metode_ambil: f.ambil,
+      alamat: f.alamat,
+      metode_bayar: f.bayar,
+      kapan: f.kapan,
+      waktu_teks: f.waktuTeks || null,
+      created_at: new Date().toISOString(),
+      _snapshot: true, // tanda: ini data sementara, nanti ditimpa data DB
+    };
+    try {
+      sessionStorage.setItem("tm_pesenan_aku", JSON.stringify(snap));
+    } catch (e) { /* private mode dll — halaman baru tinggal minta kode */ }
 
-    showPopup(
-      `Kode pesenanmu: <b>#${esc(res.kode)}</b><br>Total: <b>${rupiah(res.total)}</b><br><br>
-       Simpen kode ini buat cek status.`, "success",
-      {
-        aksi: waPenjual ? [{
-          id: "wa", label: "Bagikan ke WA", ikon: "fa-brands fa-whatsapp", cls: "uni-btn-wa",
-          onClick: () => window.open(`https://wa.me/${waPenjual}?text=${teks}`, "_blank"),
-        }] : [],
-      }
-    );
-  }
+    // form + keranjang dibersihin dulu: kalo pelanggan tombol "back",
+    // halaman gak nunjukin keranjang basi (bisa kekirim dobel)
+    keranjang = [];
+    lvlDraf.clear();
+    document.getElementById("formPesen").reset();
+    document.getElementById("fieldAlamat").hidden = true;
+    document.getElementById("petaToko").hidden = true;
+    document.getElementById("fieldWaktu").hidden = true;
+    document.getElementById("catatanOngkir").hidden = true; // gak ada pilihan COD lagi
+    document.querySelectorAll("#opsiAmbil .opsi, #opsiBayar .opsi").forEach((o) => o.classList.remove("pilih"));
+    // reset() balikin radio "sekarang" ke checked — class .pilih-nya ikut dipasang lagi
+    document.querySelector('#opsiKapan .opsi input[value="sekarang"]').closest(".opsi").classList.add("pilih");
+    daftar.forEach((m) => patchKartu(m.id)); // patch per kartu — foto gak dilepas, gak kedip
+    renderRingkas();
+    tampilLangkah(1, false); // balik ke langkah 1 (kalo redirect kepentok)
 
-  // ── section QRIS: muncul kalo pesenan barusan pilih bayar QRIS ──
-  function tampilQris(res) {
-    kodeTerakhir = res.kode;
-    totalTerakhir = res.total;
-    document.getElementById("qrisTotal").textContent = `Total bayar: ${rupiah(res.total)}`;
-    const kotak = document.getElementById("qrisFoto");
-    if (fotoQris) {
-      kotak.innerHTML = `<img src="${esc(fotoQris)}" alt="QRIS Teras Mbun" loading="lazy">`;
-      document.getElementById("qrisCatatan").textContent =
-        "Scan pakai aplikasi apa aja, nominal sesuai total. Abis bayar, kabari penjual ya.";
-    } else {
-      kotak.innerHTML = "";
-      document.getElementById("qrisCatatan").textContent =
-        "QRIS-nya lagi disiapin — kabari penjual langsung ya.";
-    }
-    document.getElementById("btnBuktiWa").hidden = !waPenjual;
-    const box = document.getElementById("qrisBayar");
-    box.hidden = false;
-    box.scrollIntoView({ behavior: "smooth", block: "center" });
+    location.href = "pesenan-aku.html?kode=" + encodeURIComponent(res.kode);
   }
 
   // ── init ──
@@ -330,35 +470,34 @@ const Pesen = (function () {
     renderSemua();
     pasangOpsi();
 
-    // klik di kartu menu: stepper / level pedas / batalin / masukkan keranjang
+    // link "Lihat Google Maps" di peta ilustrasi (kata kunci dari config)
+    document.getElementById("btnGmaps").href =
+      "https://maps.app.goo.gl/4pnqfbtSeEEeg9NC9" ;
+
+    // klik di kartu menu: stepper − qty + / level pedas
     document.getElementById("gridPilih").addEventListener("click", (e) => {
       const t = e.target.closest("[data-tambah]");
       const k = e.target.closest("[data-kurang]");
       const lv = e.target.closest("[data-level]");
-      const b = e.target.closest("[data-batal]");
-      const m = e.target.closest("[data-masuk]");
-      if (t) ubahDraf(Number(t.dataset.tambah), 1);
-      else if (k) ubahDraf(Number(k.dataset.kurang), -1);
+      if (t) ubahQty(Number(t.dataset.tambah), 1);
+      else if (k) ubahQty(Number(k.dataset.kurang), -1);
       else if (lv) {
         const [id, v] = lv.dataset.level.split(":").map(Number);
         ubahLevel(id, v);
       }
-      else if (b) batalKartu(Number(b.dataset.batal));
-      else if (m) masukKeranjang(Number(m.dataset.masuk));
     });
 
     document.getElementById("formPesen").addEventListener("submit", kirim);
 
-    // section QRIS: tombol tutup + kabari penjual lewat WA
-    document.getElementById("btnTutupQris").addEventListener("click", () => {
-      document.getElementById("qrisBayar").hidden = true;
-    });
-    document.getElementById("btnBuktiWa").addEventListener("click", () => {
-      const teks = `Halo, udah bayar QRIS pesenan #${kodeTerakhir} total ${rupiah(totalTerakhir)} ya. Ini buktinya 🙏`;
-      window.open(`https://wa.me/${waPenjual}?text=${encodeURIComponent(teks)}`, "_blank");
-    });
+    // navigasi wizard: Lanjutkan / ← balik / "Ubah lagi" di kartu konfirmasi
+    document.getElementById("btnLanjut").addEventListener("click", lanjut);
+    document.getElementById("btnBack").addEventListener("click", mundur);
+    document.getElementById("btnBalik").addEventListener("click", mundur);
 
-    // muat menu + nomor WA penjual
+    // mulai dari langkah 1 (gulir=false: halaman baru jangan langsung nge-scroll)
+    tampilLangkah(1, false);
+
+    // muat menu
     try {
       daftar = await TmDb.muatMenu();
       renderSemua();
@@ -368,10 +507,8 @@ const Pesen = (function () {
     }
     try {
       const info = await TmDb.infoWarung();
-      waPenjual = info.wa_penjual || "";
-      fotoQris = info.qris || "";
       TmDb.terapkanBg(info.bg || ""); // foto latar dari setting (kosong = gradient)
-    } catch (e) { /* tombol WA jadi disembunyiin kalau gagal */ }
+    } catch (e) { /* latar tetep gradient hangat kalo gagal */ }
   }
 
   document.addEventListener("DOMContentLoaded", mulai);
