@@ -1,101 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesenan Aku — Teras Mbun</title>
-  <meta name="description" content="Detail pesenan kamu di Teras Mbun: status dapur, rincian, dan cara bayar.">
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2a1810">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="index.html">
-        <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
-        <span class="nama">Teras Mbun<small>PESANAN AKU</small></span>
-      </a>
-      <div class="top-right">
-        <a class="btn btn-kecil btn-kaca" href="pesen.html"><i class="fa-solid fa-plus"></i> Pesan lagi</a>
-        <a class="btn btn-kecil btn-kaca" href="index.html"><i class="fa-solid fa-house"></i> Beranda</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pesenan Aku — Teras Mbun</title>
+    <meta
+      name="description"
+      content="Riwayat pesenan kamu di Teras Mbun: status dapur, rincian, dan cara bayar."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#2a1810" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Outfit:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="index">
+          <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
+          <span class="nama">Teras Mbun<small>PESANAN AKU</small></span>
+        </a>
+        <div class="top-right">
+          <a class="btn btn-kecil btn-kaca" href="pesen"
+            ><i class="fa-solid fa-plus"></i> Pesan lagi</a
+          >
+          <a class="btn btn-kecil btn-kaca" href="index"
+            ><i class="fa-solid fa-house"></i> Beranda</a
+          >
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="wrap">
-    <!-- lagi muat -->
-    <div class="kartu-form aku-muat" id="akuMuat">
-      <i class="fa-solid fa-spinner fa-spin"></i> Ambil pesenan…
-    </div>
-
-    <!-- kode gak ditemuin / gak ada -->
-    <section class="kartu-form aku-kosong" id="akuKosong" hidden>
-      <div class="aku-kosong-ikon"><i class="fa-solid fa-magnifying-glass"></i></div>
-      <h2>Pesenan gak ketemu</h2>
-      <p>Coba buka lagi lewat tautan / kode yang tadi, atau pesen baru.</p>
-      <a class="btn btn-hijau btn-lebar" href="pesen.html"><i class="fa-solid fa-utensils"></i> Pesan sekarang</a>
-    </section>
-
-    <!-- detail pesenan -->
-    <section class="kartu-form aku-detail" id="akuDetail" hidden>
-      <div class="aku-head">
-        <span class="aku-kode">#<span id="dKode">—</span></span>
-        <span class="aku-status" id="dStatus"><i class="fa-solid fa-hourglass-half"></i> Menunggu</span>
+    <main class="wrap">
+      <!-- lagi muat -->
+      <div class="kartu-form aku-muat" id="akuMuat">
+        <i class="fa-solid fa-spinner fa-spin"></i> Ambil riwayat pesenan…
       </div>
-      <p class="aku-sapa" id="dSapa">Makasih pesenannya! 🙌</p>
 
-      <!-- 3 langkah progress -->
-      <ol class="aku-langkah" id="dLangkah">
-        <li data-langkah="menunggu"><i class="fa-solid fa-receipt"></i><span>Menunggu</span></li>
-        <li data-langkah="dibuat"><i class="fa-solid fa-fire-burner"></i><span>Dibuat</span></li>
-        <li data-langkah="siap"><i class="fa-solid fa-check"></i><span>Siap</span></li>
-      </ol>
+      <!-- belom ada pesenan sama sekali -->
+      <section class="kartu-form aku-kosong" id="akuKosong" hidden>
+        <div class="aku-kosong-ikon"><i class="fa-solid fa-receipt"></i></div>
+        <h2>Belum ada pesenan</h2>
+        <p>Semua pesenan kamu bakal nongol dan kesimpen di sini.</p>
+        <a class="btn btn-hijau btn-lebar" href="pesen"
+          ><i class="fa-solid fa-utensils"></i> Pesan sekarang</a
+        >
+      </section>
 
-      <!-- rincian item -->
-      <h3 class="aku-judul"><i class="fa-solid fa-receipt"></i> Rincian</h3>
-      <ul class="daftar-item" id="dItems"></ul>
-      <p class="rincian-total"><span>Total</span><b id="dTotal">Rp0</b></p>
+      <!-- daftar riwayat: tiap pesenan = 1 kartu (rincian + info + QRIS
+         di dalem kartu yang sama, gak dipisah) -->
+      <div class="daftar-aku" id="daftarAku"></div>
 
-      <!-- info pesenan -->
-      <h3 class="aku-judul"><i class="fa-solid fa-circle-info"></i> Info</h3>
-      <div class="aku-info" id="dInfo"></div>
-    </section>
-
-    <!-- QRIS: muncul kalo pesenan pilih bayar QRIS -->
-    <section class="kartu-form qris-bayar" id="qrisBayar" hidden>
-      <h2 class="kartu-judul"><span class="no"><i class="fa-solid fa-qrcode"></i></span> Bayar QRIS</h2>
-      <p>Scan QR di bawah ini buat bayar:</p>
-      <p class="qris-total" id="qrisTotal"></p>
-      <div class="qris-foto" id="qrisFoto"></div>
-      <p class="catatan-qris" id="qrisCatatan"></p>
-      <div class="aksi-media">
-        <button class="btn btn-kecil btn-foto" id="btnBuktiWa" hidden><i class="fa-brands fa-whatsapp"></i> Kabari kalo udah bayar</button>
+      <!-- aksi bawah -->
+      <div class="aku-aksi" id="akuAksi" hidden>
+        <a class="btn btn-hijau" href="pesen"
+          ><i class="fa-solid fa-plus"></i> Pesan lagi</a
+        >
+        <button class="btn btn-kaca" id="btnBersih">
+          <i class="fa-solid fa-broom"></i> Bersihkan
+        </button>
       </div>
-    </section>
+    </main>
 
-    <!-- aksi bawah -->
-    <div class="aku-aksi" id="akuAksi" hidden>
-      <button class="btn btn-hijau" id="btnWa"><i class="fa-brands fa-whatsapp"></i> Bagikan ke WA</button>
-      <a class="btn btn-kaca" href="pesen.html"><i class="fa-solid fa-plus"></i> Pesan lagi</a>
-    </div>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/toast.js"></script>
-  <script src="js/notice.js"></script>
-  <script src="js/db.js"></script>
-  <script src="js/pesenan-aku.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
-    }
-  </script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/notice.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/pesenan-aku.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () =>
+          navigator.serviceWorker.register("sw.js"),
+        );
+      }
+    </script>
+  </body>
 </html>

@@ -839,7 +839,31 @@ body::before {
 }
 .bar-bawah .total {
   flex: 1;
+  position: relative;
   color: var(--putih);
+  /* sekarang ini <button>: buka panel liat isi keranjang */
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 5px 28px 5px 8px;
+  margin: -5px -8px;
+  border-radius: 13px;
+  cursor: pointer;
+  min-width: 0;
+  transition: background 0.15s ease;
+}
+.bar-bawah .total:hover,
+.bar-bawah .total:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+.bar-bawah .total #totalChevron {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.74rem;
+  color: rgba(255, 250, 242, 0.7);
 }
 .bar-bawah .total small {
   display: block;
@@ -851,6 +875,135 @@ body::before {
   font-family: var(--font-display);
   font-size: 1.3rem;
   color: var(--amber);
+}
+
+/* ── Panel slide-up: isi keranjang (klik total di bar bawah) ── */
+.tirai-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(20, 12, 7, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s;
+}
+.tirai-sheet.terbuka {
+  opacity: 1;
+  visibility: visible;
+}
+.sheet-keranjang {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 71;
+  max-width: 720px; /* ikut lebar .wrap di desktop — gak nembang full */
+  margin: 0 auto;
+  background: #fffbf4;
+  color: var(--ink); /* krem solid → teks HARUS gelap (body default putih) */
+  border-top: 1px solid var(--glass-line);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -14px 40px rgba(18, 11, 5, 0.35);
+  padding: 13px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height: 74vh;
+  overflow-y: auto;
+  transform: translateY(112%);
+  visibility: hidden;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0.32s;
+}
+.sheet-keranjang.terbuka {
+  transform: none;
+  visibility: visible;
+}
+.sheet-keranjang::before {
+  content: "";
+  display: block;
+  width: 46px;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(42, 24, 16, 0.2);
+  margin: 0 auto 12px;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.sheet-head b {
+  font-family: var(--font-display);
+  font-size: 1.06rem;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--espresso);
+  min-width: 0;
+}
+.sheet-head b i {
+  color: var(--amber);
+  font-size: 0.95rem;
+}
+/* badge jumlah item di judul sheet */
+.sheet-jml {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--muted);
+  background: rgba(42, 24, 16, 0.07);
+  border: 1px solid rgba(42, 24, 16, 0.12);
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sheet-keranjang .daftar-item {
+  margin: 6px 0 4px;
+  color: var(--ink);
+}
+.sheet-keranjang .daftar-item li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+}
+.sheet-keranjang .daftar-item li span {
+  font-weight: 600;
+}
+.sheet-keranjang .daftar-item li b {
+  color: var(--espresso);
+  white-space: nowrap;
+}
+/* strip total: ijo niat, jadi blok sendiri biar gak nyatu item */
+.sheet-keranjang .rincian-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(47, 158, 99, 0.12);
+  border: 1px solid rgba(47, 158, 99, 0.32);
+  border-radius: 13px;
+  padding: 11px 13px !important;
+  margin-top: 11px;
+  font-size: 1rem !important;
+}
+.sheet-keranjang .rincian-total span {
+  color: #1e7a4a;
+  font-weight: 700;
+}
+.sheet-keranjang .rincian-total b {
+  color: var(--daun);
+  font-size: 1.12rem;
+}
+.sheet-kosong {
+  color: var(--muted);
+  font-weight: 600;
+  text-align: center;
+  padding: 14px 0 8px;
 }
 
 input[type="text"],
@@ -1063,7 +1216,7 @@ input[type="number"]::-webkit-inner-spin-button {
   border-color: rgba(47, 158, 99, 0.35);
 }
 
-/* ── Halaman admin (admin.html): kelola menu + foto bg/qris ── */
+/* ── Halaman admin (admin): kelola menu + foto bg/qris ── */
 .head-media {
   display: flex;
   align-items: center;
@@ -1375,17 +1528,19 @@ input[type="number"]::-webkit-inner-spin-button {
 /* tombol kaca di dalem kartu terang (admin, section QRIS):
    versi coklat — gaya kaca gelap cuma buat latar gelap */
 .media-kartu .btn-kaca,
-.kartu-form .btn-kaca {
+.kartu-form .btn-kaca,
+.sheet-keranjang .btn-kaca {
   background: rgba(42, 24, 16, 0.06);
   color: var(--coklat);
   border: 1px solid rgba(42, 24, 16, 0.22);
 }
 .media-kartu .btn-kaca:hover,
-.kartu-form .btn-kaca:hover {
+.kartu-form .btn-kaca:hover,
+.sheet-keranjang .btn-kaca:hover {
   background: rgba(42, 24, 16, 0.13);
 }
 
-/* ── Section foto QRIS setelah pesenan dibuat (pesen.html) ── */
+/* ── Section foto QRIS setelah pesenan dibuat (pesen) ── */
 .qris-bayar {
   animation: rise 0.3s ease both;
 }
@@ -1413,75 +1568,235 @@ input[type="number"]::-webkit-inner-spin-button {
   text-align: center;
 }
 
-/* ── Halaman Pesenan Aku (pesenan-aku.html) ── */
-.aku-muat { text-align: center; color: var(--muted); font-weight: 600; padding: 30px 16px; }
-.aku-kosong { text-align: center; }
-.aku-kosong-ikon {
-  width: 64px; height: 64px; margin: 4px auto 12px; display: grid; place-items: center;
-  border-radius: 50%; background: rgba(240, 169, 46, .16); color: var(--amber); font-size: 1.5rem;
+/* ── Halaman Pesenan Aku (pesenan-aku) ── */
+.aku-muat {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 30px 16px;
 }
-.aku-kosong h2 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px; }
-.aku-kosong p { color: var(--muted); margin-bottom: 16px; }
+.aku-kosong {
+  text-align: center;
+}
+.aku-kosong-ikon {
+  width: 64px;
+  height: 64px;
+  margin: 4px auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(240, 169, 46, 0.16);
+  color: var(--amber);
+  font-size: 1.5rem;
+}
+.aku-kosong h2 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+.aku-kosong p {
+  color: var(--muted);
+  margin-bottom: 16px;
+}
 
-.aku-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.aku-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .aku-kode {
-  font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; line-height: 1;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.7rem;
+  line-height: 1;
   color: var(--espresso);
 }
 .aku-status {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: .82rem; font-weight: 800; padding: 7px 14px; border-radius: 999px;
-  border: 1px solid transparent; white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
-.aku-status.s-menunggu { background: rgba(240, 169, 46, .16); color: #96650f; border-color: rgba(240, 169, 46, .45); }
-.aku-status.s-dibuat   { background: rgba(232, 139, 58, .16); color: #b55b16; border-color: rgba(232, 139, 58, .45); }
-.aku-status.s-siap      { background: rgba(47, 158, 99, .14); color: #1e7a4a; border-color: rgba(47, 158, 99, .4); }
-.aku-sapa { color: var(--muted); font-size: .92rem; margin: 8px 0 14px; }
+.aku-status.s-menunggu {
+  background: rgba(240, 169, 46, 0.16);
+  color: #96650f;
+  border-color: rgba(240, 169, 46, 0.45);
+}
+.aku-status.s-dibuat {
+  background: rgba(232, 139, 58, 0.16);
+  color: #b55b16;
+  border-color: rgba(232, 139, 58, 0.45);
+}
+.aku-status.s-siap {
+  background: rgba(47, 158, 99, 0.14);
+  color: #1e7a4a;
+  border-color: rgba(47, 158, 99, 0.4);
+}
+.aku-sapa {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: 8px 0 14px;
+}
 
 /* 3 langkah progress: Menunggu → Dibuat → Siap */
 .aku-langkah {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-  list-style: none; padding: 0; margin: 0 0 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
 }
 .aku-langkah li {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 11px 6px 9px; border-radius: 14px; text-align: center;
-  background: rgba(42, 24, 16, .05); border: 1px solid rgba(42, 24, 16, .1);
-  color: var(--muted); font-size: .78rem; font-weight: 700;
-  transition: background .2s ease, color .2s ease, border-color .2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 6px 9px;
+  border-radius: 14px;
+  text-align: center;
+  background: rgba(42, 24, 16, 0.05);
+  border: 1px solid rgba(42, 24, 16, 0.1);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
-.aku-langkah li i { font-size: 1.05rem; }
-.aku-langkah li.lewat  { background: rgba(47, 158, 99, .12); border-color: rgba(47, 158, 99, .35); color: #1e7a4a; }
-.aku-langkah li.aktif  { background: linear-gradient(135deg, var(--amber), var(--amber2)); border-color: transparent; color: var(--espresso); box-shadow: 0 4px 12px rgba(240, 169, 46, .35); }
+.aku-langkah li i {
+  font-size: 1.05rem;
+}
+.aku-langkah li.lewat {
+  background: rgba(47, 158, 99, 0.12);
+  border-color: rgba(47, 158, 99, 0.35);
+  color: #1e7a4a;
+}
+.aku-langkah li.aktif {
+  background: linear-gradient(135deg, var(--amber), var(--amber2));
+  border-color: transparent;
+  color: var(--espresso);
+  box-shadow: 0 4px 12px rgba(240, 169, 46, 0.35);
+}
 
 .aku-judul {
-  font-family: var(--font-display); font-weight: 600; font-size: 1.05rem;
-  margin: 16px 0 2px; display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 16px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.aku-judul i { color: var(--amber); font-size: .95rem; }
+.aku-judul i {
+  color: var(--amber);
+  font-size: 0.95rem;
+}
 .aku-detail .daftar-item li {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
-.aku-detail .daftar-item li b { white-space: nowrap; }
-.aku-detail .rincian-total { font-size: 1.06rem; padding-top: 6px !important; }
-.aku-detail .rincian-total b { color: var(--daun); }
+.aku-detail .daftar-item li b {
+  white-space: nowrap;
+}
+.aku-detail .rincian-total {
+  font-size: 1.06rem;
+  padding-top: 6px !important;
+}
+.aku-detail .rincian-total b {
+  color: var(--daun);
+}
 
 /* baris info (dibuat / jadwal / ambil / bayar) */
-.aku-info { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.aku-baris {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(255, 255, 255, .65); border: 1px solid rgba(42, 24, 16, .1);
-  border-radius: 13px; padding: 10px 13px; font-size: .9rem;
+.aku-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
 }
-.aku-baris i { color: var(--amber); width: 18px; text-align: center; flex-shrink: 0; }
-.aku-baris .lbl { color: var(--muted); flex-shrink: 0; }
-.aku-baris .val { margin-left: auto; font-weight: 700; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.aku-baris {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(42, 24, 16, 0.1);
+  border-radius: 13px;
+  padding: 10px 13px;
+  font-size: 0.9rem;
+}
+.aku-baris i {
+  color: var(--amber);
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.aku-baris .lbl {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.aku-baris .val {
+  margin-left: auto;
+  font-weight: 700;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 /* aksi bawah */
-.aku-aksi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+/* riwayat: tiap pesenan = 1 kartu, ditumpuk vertikal */
+.daftar-aku {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+/* aksi per kartu (Bagikan WA + Pesan lagi) */
+.aku-baris-aksi {
+  display: flex;
+  gap: 9px;
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px dashed rgba(42, 24, 16, 0.16);
+}
+.aku-baris-aksi .btn {
+  flex: 1;
+}
+/* QRIS DIGABUNG di dalem kartu pesenan (pemisahnya garis putus-putus) */
+.aku-qris {
+  margin-top: 17px;
+  padding-top: 15px;
+  border-top: 1px dashed rgba(42, 24, 16, 0.18);
+}
+.aku-qris .aku-judul {
+  margin-top: 0;
+}
+.aku-qris .qris-foto {
+  margin-bottom: 10px;
+}
+
+.aku-aksi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
 @media (max-width: 420px) {
-  .aku-kode { font-size: 1.45rem; }
-  .aku-langkah li { font-size: .72rem; padding: 9px 4px 8px; }
+  .aku-kode {
+    font-size: 1.45rem;
+  }
+  .aku-langkah li {
+    font-size: 0.72rem;
+    padding: 9px 4px 8px;
+  }
 }
 
 /* ===== Toast ===== */
@@ -1718,7 +2033,7 @@ input[type="number"]::-webkit-inner-spin-button {
   font-style: italic;
 }
 
-/* ── Wizard: indikator langkah (pesen.html) ── */
+/* ── Wizard: indikator langkah (pesen) ── */
 .step-nav {
   display: flex;
   flex-direction: column;
@@ -1735,7 +2050,10 @@ input[type="number"]::-webkit-inner-spin-button {
   height: 9px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.28);
-  transition: background 0.2s ease, transform 0.2s ease, width 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    width 0.2s ease;
 }
 .step-dots i.aktif {
   background: var(--daun);
@@ -2027,6 +2345,10 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--amber);
   margin-top: 3px;
   flex-shrink: 0;
+}
+.catatan-ongkir > span {
+  flex: 1;
+  min-width: 0;
 }
 .catatan-ongkir.kecil {
   font-size: 0.8rem;

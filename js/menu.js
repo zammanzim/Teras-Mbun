@@ -1,17 +1,27 @@
 // ============================================================
 // menu.js — sisi CUSTOMER (index): showcase menu
-// Pesenan PINDAH ke pesen.html (js/pesen.js).
+// Pesenan PINDAH ke pesen (js/pesen.js).
 // ============================================================
 
 const Menu = (function () {
   "use strict";
 
-  let daftar = [];          // isi tabel menu
+  let daftar = []; // isi tabel menu
 
   // ── util ──
   const rupiah = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const esc = (s) =>
+    String(s == null ? "" : s).replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
 
   // ── render ──
   // grouping: menu dikelompokin per kategori — SEMUA tampil
@@ -35,21 +45,27 @@ const Menu = (function () {
       box.innerHTML = '<p class="kosong">Belum ada menu nih.</p>';
       return;
     }
-    box.innerHTML = kelompokkan().map((g) => `
+    box.innerHTML = kelompokkan()
+      .map(
+        (g) => `
       <div class="menu-grup">
         <div class="kat-judul"><span class="ikon">${emojiKategori(g.kat)}</span><span class="label">${esc(labelKat(g.kat))}</span></div>
         ${g.items.map((m, ix) => blokTampil(m, ix)).join("")}
-      </div>`).join("");
+      </div>`,
+      )
+      .join("");
   }
 
   function blokTampil(m, ix) {
     const adaFoto = !!m.gambar;
     return `<div class="tampil-blok" style="animation-delay:${ix * 40}ms">
       <div class="tampil-foto ${adaFoto ? "" : "kosong-foto"}">
-        ${adaFoto
-          ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
+        ${
+          adaFoto
+            ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
                   onerror="this.closest('.tampil-foto').classList.add('kosong-foto'); this.remove();">`
-          : ""}
+            : ""
+        }
         <span class="foto-emoji">${emojiKategori(m.kategori)}</span>
       </div>
       <div class="tampil-info">
@@ -64,7 +80,13 @@ const Menu = (function () {
 
   // emoji placeholder kalo foto menu belum ada
   function emojiKategori(kat) {
-    const peta = { nasi: "🍚", minuman: "🥤", lauk: "🍗", lauk_pauk: "🍗", snack: "🍘" };
+    const peta = {
+      nasi: "🍚",
+      minuman: "🥤",
+      lauk: "🍗",
+      lauk_pauk: "🍗",
+      snack: "🍘",
+    };
     return peta[String(kat || "").toLowerCase()] || "🍽️";
   }
 
@@ -73,7 +95,7 @@ const Menu = (function () {
   const NAV_SECTIONS = [
     { id: "greeting", label: "Beranda", icon: "fa-house" },
     { id: "daftar", label: "Lihat Menu", icon: "fa-utensils" },
-    { href: "pesen.html", label: "Pesan", icon: "fa-cart-shopping" },
+    { href: "pesen", label: "Pesan", icon: "fa-cart-shopping" },
   ];
 
   function pasangDropdown() {
@@ -82,9 +104,10 @@ const Menu = (function () {
     if (!btn || !panel) return;
 
     // render link dari NAV_SECTIONS
-    panel.innerHTML = NAV_SECTIONS
-      .map((s) => `<a href="${esc(s.href || "#" + s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`)
-      .join("");
+    panel.innerHTML = NAV_SECTIONS.map(
+      (s) =>
+        `<a href="${esc(s.href || "#" + s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`,
+    ).join("");
 
     const tutup = () => {
       panel.hidden = true;
@@ -103,7 +126,10 @@ const Menu = (function () {
       const a = e.target.closest("a");
       if (!a) return;
       const href = a.getAttribute("href");
-      if (href && !href.startsWith("#")) { tutup(); return; } // pindah halaman
+      if (href && !href.startsWith("#")) {
+        tutup();
+        return;
+      } // pindah halaman
       e.preventDefault();
       if (href === "#greeting") {
         // Beranda: scroll ke paling atas beneran (0px).
@@ -135,12 +161,17 @@ const Menu = (function () {
       daftar = await TmDb.muatMenu();
       renderTampil();
     } catch (err) {
-      document.getElementById("menuTampil").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
+      document.getElementById("menuTampil").innerHTML =
+        '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
       showToast(TmDb.pesanRamah(err), "error");
     }
 
     // foto latar dari setting (kosong = gradient hangat)
-    try { TmDb.terapkanBg((await TmDb.infoWarung()).bg || ""); } catch (e) { /* latar default tetep jalan */ }
+    try {
+      TmDb.terapkanBg((await TmDb.infoWarung()).bg || "");
+    } catch (e) {
+      /* latar default tetep jalan */
+    }
   }
 
   document.addEventListener("DOMContentLoaded", mulai);

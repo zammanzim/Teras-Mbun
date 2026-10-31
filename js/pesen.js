@@ -9,9 +9,9 @@
 const Pesen = (function () {
   "use strict";
 
-  let daftar = [];        // isi tabel menu
-  let lvlDraf = new Map();// level pedas pilihan per kartu (id → 0..5)
-  let keranjang = [];     // committed: [{id, nama, harga, qty, level}]
+  let daftar = []; // isi tabel menu
+  let lvlDraf = new Map(); // level pedas pilihan per kartu (id → 0..5)
+  let keranjang = []; // committed: [{id, nama, harga, qty, level}]
   let renderPertama = true; // animasi entrance cuma sekali
 
   const LEVEL = [
@@ -24,8 +24,18 @@ const Pesen = (function () {
   ];
 
   const rupiah = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const esc = (s) =>
+    String(s == null ? "" : s).replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
 
   // ── normalisasi nomor WA ──
   // +62812… / 62812… / 812… → 0812…, terus diformat 08XX-XXXX-XXXX.
@@ -33,8 +43,9 @@ const Pesen = (function () {
   // liat hasilnya langsung pas ngetik.
   const normWa = (raw) => {
     let d = String(raw || "").replace(/\D/g, "");
-    if (/^62\d{9,}$/.test(d)) d = "0" + d.slice(2);   // +62/62 → 0
-    else if (/^8\d{8,}$/.test(d)) d = "0" + d;        // 812… → 0812…
+    if (/^62\d{9,}$/.test(d))
+      d = "0" + d.slice(2); // +62/62 → 0
+    else if (/^8\d{8,}$/.test(d)) d = "0" + d; // 812… → 0812…
     return d;
   };
   const formatWa = (d) =>
@@ -64,7 +75,9 @@ const Pesen = (function () {
 
   // emoji placeholder kalo foto menu belum ada
   const emojiKat = (k) =>
-    ({ nasi: "🍚", minuman: "🥤", lauk: "🍗", lauk_pauk: "🍗", snack: "🍘" }[String(k || "").toLowerCase()]) || "🍽️";
+    ({ nasi: "🍚", minuman: "🥤", lauk: "🍗", lauk_pauk: "🍗", snack: "🍘" })[
+      String(k || "").toLowerCase()
+    ] || "🍽️";
 
   // ── render kartu menu ──
   // 1 kartu = 1 menu: foto, nama+harga, stepper − qty + (LANGSUNG masuk
@@ -86,13 +99,17 @@ const Pesen = (function () {
       peta.get(k).push(m);
     });
     let ix = 0; // nomor urut global (buat jeda animasi antar kartu)
-    grid.innerHTML = [...peta.entries()].map(([kat, items]) => `
+    grid.innerHTML = [...peta.entries()]
+      .map(
+        ([kat, items]) => `
       <div class="kat-seksi">
         <div class="kat-judul"><span class="ikon">${emojiKat(kat)}</span><span class="label">${esc(labelKat(kat))}</span></div>
         <div class="pilih-grid">
           ${items.map((m) => kartuPilih(m, ix++)).join("")}
         </div>
-      </div>`).join("");
+      </div>`,
+      )
+      .join("");
     if (daftar.length) renderPertama = false;
   }
 
@@ -103,22 +120,30 @@ const Pesen = (function () {
     const adaFoto = !!m.gambar;
     // level pedas per kartu — khusus makanan, SELALU tampil;
     // kalo qty-nya 0 chips-nya disabled
-    const levelBaris = isMakanan(m.id) ? `
+    const levelBaris = isMakanan(m.id)
+      ? `
       <div class="level-baris${q ? "" : " mati"}">
         <span class="lvl-label"><i class="fa-solid fa-pepper-hot"></i> Pedas</span>
         <div class="lvl-chips">
-          ${LEVEL.map((l) => `<button type="button" class="lvl-chip lv-${l.v}${lvlNow === l.v ? " aktif" : ""}"
-            data-level="${m.id}:${l.v}" aria-label="${l.label}" title="${l.label}" ${q ? "" : "disabled"}>${l.v}</button>`).join("")}
+          ${LEVEL.map(
+            (
+              l,
+            ) => `<button type="button" class="lvl-chip lv-${l.v}${lvlNow === l.v ? " aktif" : ""}"
+            data-level="${m.id}:${l.v}" aria-label="${l.label}" title="${l.label}" ${q ? "" : "disabled"}>${l.v}</button>`,
+          ).join("")}
         </div>
-      </div>` : "";
+      </div>`
+      : "";
     return `<div class="kartu-menu${q ? " di-keranjang" : ""}${anim ? " anim" : ""}"
             data-kartu="${m.id}"
             ${anim ? `style="animation-delay:${ix * 30}ms"` : ""}>
       <div class="foto ${adaFoto ? "" : "kosong-foto"}">
-        ${adaFoto
-          ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
+        ${
+          adaFoto
+            ? `<img src="${esc(m.gambar)}" alt="${esc(m.nama)}" loading="lazy"
                   onerror="this.closest('.foto').classList.add('kosong-foto'); this.remove();">`
-          : ""}
+            : ""
+        }
         <span class="foto-emoji">${emojiKat(m.kategori)}</span>
       </div>
       <div class="info">
@@ -174,7 +199,10 @@ const Pesen = (function () {
       // pertama kali masuk: level = pilihan sekarang (default 2 / mid);
       // minuman gak bawa level (server juga maksa 0)
       keranjang.push({
-        id: m.id, nama: m.nama, harga: m.harga, qty: q,
+        id: m.id,
+        nama: m.nama,
+        harga: m.harga,
+        qty: q,
         level: isMakanan(id) ? lvlAt(id) : 0,
       });
     }
@@ -202,13 +230,18 @@ const Pesen = (function () {
           ${ongkir() ? `<li class="rincian-ongkir"><span>Ongkir COD <i class="fa-solid fa-circle-info" title="gak fix"></i></span><b>+${rupiah(ongkir())}</b></li>` : ""}
           <li class="rincian-total"><span>Total</span><b>${rupiah(totalBayar())}</b></li>
         </ul>
-        ${ongkir() ? '<p class="catatan-ongkir kecil"><i class="fa-solid fa-motorcycle"></i> Ongkir gak fix ya — Rp3.000 cuma perkiraan awal, bisa berubah tergantung deket / jauh.</p>' : ""}`;
+        ${ongkir() ? '<p class="catatan-ongkir kecil"><i class="fa-solid fa-info-circle"></i><span>Ongkir +Rp3.000 cuma perkiraan awal, bisa berubah tergantung deket / jauh. Konfirmasi lagi yaa.</span></p>' : ""}`;
     }
     document.getElementById("barJml").textContent = jml() + " item";
     document.getElementById("barTotal").textContent = rupiah(totalBayar());
+    if (sheetTerbuka()) renderSheet(); // sheet ikut ke-update
+    simpanDraf(); // aksi pilih menu / ganti level = ke-save
   }
 
-  function renderSemua() { renderPilih(); renderRingkas(); }
+  function renderSemua() {
+    renderPilih();
+    renderRingkas();
+  }
 
   // ── wizard: 1 kartu tampil per langkah ──
   // langkah 1..5 = form, 6 = konfirmasi (tombol kirim ada di dalem kartu,
@@ -227,10 +260,11 @@ const Pesen = (function () {
 
     // dots + caption indikator
     document.querySelectorAll("#stepDots i").forEach((dot, ix) => {
-      dot.classList.toggle("aktif", ix < langkah - 1);   // udah dilewatin
-      dot.classList.toggle("kini", ix === langkah - 1);   // lagi di sini
+      dot.classList.toggle("aktif", ix < langkah - 1); // udah dilewatin
+      dot.classList.toggle("kini", ix === langkah - 1); // lagi di sini
     });
-    document.getElementById("stepCap").textContent = `Langkah ${langkah} dari ${MAKS_LANGKAH}`;
+    document.getElementById("stepCap").textContent =
+      `Langkah ${langkah} dari ${MAKS_LANGKAH}`;
 
     // bar bawah: ilang di langkah konfirmasi, tombol ← ilang di langkah 1
     document.getElementById("barKirim").hidden = langkah === MAKS_LANGKAH;
@@ -238,6 +272,7 @@ const Pesen = (function () {
 
     if (langkah === MAKS_LANGKAH) renderKonfirmasi(); // snapshot isi form
 
+    simpanDraf(); // posisi langkah ikut kesimpen
     if (gulir) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -245,41 +280,77 @@ const Pesen = (function () {
     if (!validLangkah(langkah)) return;
     tampilLangkah(langkah + 1);
   }
-  function mundur() { tampilLangkah(langkah - 1); }
+  function mundur() {
+    tampilLangkah(langkah - 1);
+  }
 
   // validasi isi SATU langkah; false = ada yang kurang
   // (toast + fokus elemennya udah diurus di dalem)
   function validLangkah(n) {
     if (n === 1) {
-      if (!keranjang.length) { showToast("Pilih menu dulu ya.", "info"); return false; }
+      if (!keranjang.length) {
+        showToast("Pilih menu dulu ya.", "info");
+        return false;
+      }
       return true;
     }
     if (n === 2) {
       const nama = document.getElementById("inNama").value.trim();
       const wa = formatWa(normWa(document.getElementById("inWa").value));
-      if (!nama) { showToast("Isi nama dulu ya.", "error"); document.getElementById("inNama").focus(); return false; }
-      if (!wa) { showToast("Isi nomor WA dulu ya.", "error"); document.getElementById("inWa").focus(); return false; }
+      if (!nama) {
+        showToast("Isi nama dulu ya.", "error");
+        document.getElementById("inNama").focus();
+        return false;
+      }
+      if (!wa) {
+        showToast("Isi nomor WA dulu ya.", "error");
+        document.getElementById("inWa").focus();
+        return false;
+      }
       if (!/^08\d{9,12}$/.test(wa.replace(/\D/g, ""))) {
         showToast("Nomor WA kayaknya belum bener (harus 08…).", "error");
-        document.getElementById("inWa").focus(); return false;
+        document.getElementById("inWa").focus();
+        return false;
       }
       return true;
     }
     if (n === 3) {
       const ambil = nilai("ambil");
-      if (!ambil) { showToast("Pilih mau diantar atau ambil sendiri.", "info"); document.getElementById("opsiAmbil").scrollIntoView({ behavior: "smooth", block: "center" }); return false; }
-      if (ambil === "cod" && !document.getElementById("inAlamat").value.trim()) {
-        showToast("Isi alamat buat diantar.", "error"); document.getElementById("inAlamat").focus(); return false;
+      if (!ambil) {
+        showToast("Pilih mau diantar atau ambil sendiri.", "info");
+        document
+          .getElementById("opsiAmbil")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
+      if (
+        ambil === "cod" &&
+        !document.getElementById("inAlamat").value.trim()
+      ) {
+        showToast("Isi alamat buat diantar.", "error");
+        document.getElementById("inAlamat").focus();
+        return false;
       }
       return true;
     }
     if (n === 4) {
-      if (!nilai("bayar")) { showToast("Pilih mau bayar QRIS atau tunai.", "info"); document.getElementById("opsiBayar").scrollIntoView({ behavior: "smooth", block: "center" }); return false; }
+      if (!nilai("bayar")) {
+        showToast("Pilih mau bayar QRIS atau tunai.", "info");
+        document
+          .getElementById("opsiBayar")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
       return true;
     }
     if (n === 5) {
-      if (nilai("kapan") === "custom" && !document.getElementById("inWaktu").value.trim()) {
-        showToast("Tulis jam kirimnya dulu ya.", "error"); document.getElementById("inWaktu").focus(); return false;
+      if (
+        nilai("kapan") === "custom" &&
+        !document.getElementById("inWaktu").value.trim()
+      ) {
+        showToast("Tulis jam kirimnya dulu ya.", "error");
+        document.getElementById("inWaktu").focus();
+        return false;
       }
       return true;
     }
@@ -290,7 +361,15 @@ const Pesen = (function () {
   function teksKapan(kapan, waktuTeks) {
     if (kapan === "besok") {
       const b = new Date(Date.now() + 864e5);
-      return "Besok (" + b.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" }) + ")";
+      return (
+        "Besok (" +
+        b.toLocaleDateString("id-ID", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }) +
+        ")"
+      );
     }
     if (kapan === "custom" && waktuTeks) return waktuTeks; // teks bebas user ("jam 5 sore")
     return "Sekarang";
@@ -310,24 +389,195 @@ const Pesen = (function () {
     const baris = [];
     if (nama) baris.push(["fa-solid fa-user", "Nama", nama]);
     if (wa) baris.push(["fa-brands fa-whatsapp", "No. WA", wa]);
-    baris.push([ambil === "cod" ? "fa-solid fa-motorcycle" : "fa-solid fa-store",
-      "Terima", ambil === "cod" ? "Diantar (COD)" : "Ambil di toko"]);
-    if (ambil === "cod" && alamat) baris.push(["fa-solid fa-location-dot", "Alamat", alamat]);
-    if (ambil === "cod") baris.push(["fa-solid fa-truck", "Ongkir*", "+Rp3.000 (gak fix)"]);
-    if (bayar) baris.push([bayar === "qris" ? "fa-solid fa-qrcode" : "fa-solid fa-money-bill-wave",
-      "Bayar", bayar === "qris" ? "QRIS" : "Tunai"]);
-    baris.push(["fa-regular fa-calendar", "Diantar kapan", teksKapan(kapan, waktuTeks)]);
+    baris.push([
+      ambil === "cod" ? "fa-solid fa-motorcycle" : "fa-solid fa-store",
+      "Terima",
+      ambil === "cod" ? "Diantar (COD)" : "Ambil di toko",
+    ]);
+    if (ambil === "cod" && alamat)
+      baris.push(["fa-solid fa-location-dot", "Alamat", alamat]);
+    if (ambil === "cod")
+      baris.push(["fa-solid fa-truck", "Ongkir*", "+Rp3.000 (gak fix)"]);
+    if (bayar)
+      baris.push([
+        bayar === "qris" ? "fa-solid fa-qrcode" : "fa-solid fa-money-bill-wave",
+        "Bayar",
+        bayar === "qris" ? "QRIS" : "Tunai",
+      ]);
+    baris.push([
+      "fa-regular fa-calendar",
+      "Diantar kapan",
+      teksKapan(kapan, waktuTeks),
+    ]);
 
-    document.getElementById("konfInfo").innerHTML = baris.map(([ikon, label, nilaiTeks]) => `
+    document.getElementById("konfInfo").innerHTML = baris
+      .map(
+        ([ikon, label, nilaiTeks]) => `
       <div class="aku-baris"><i class="${ikon}"></i>
         <span class="lbl">${esc(label)}</span>
         <span class="val">${esc(nilaiTeks)}</span>
-      </div>`).join("") +
-      (ambil === "cod"
-        ? `<p class="catatan-ongkir kecil"><i class="fa-solid fa-circle-info"></i>
-             *Ongkir <b>gak fix</b> — Rp3.000 cuma awal, bisa berubah
-             tergantung makin deket / makin jauh. Penjual yang konfirmasi.</p>`
+      </div>`,
+      )
+      .join("");
+  }
+
+  // ── draf pesenan (sessionStorage) ──
+  // Tiap aksi (pilih menu, isi form, ganti langkah) langsung disimpen.
+  // Kalo halaman di-refresh / user balik ke beranda trus masuk lagi,
+  // isi form + keranjangnya balik persis — gak ngulang dari nol.
+  const DRAF_KEY = "tm_draf_pesen";
+  let drafSiap = false; // true = draf udah kebaca, boleh mulai nulis
+
+  const nilaiInput = (id) => (document.getElementById(id) || {}).value || "";
+
+  function simpanDraf() {
+    if (!drafSiap) return; // jangan nimpa draf lama sebelum sempat dibaca
+    try {
+      sessionStorage.setItem(
+        DRAF_KEY,
+        JSON.stringify({
+          keranjang,
+          lvl: [...lvlDraf.entries()],
+          nama: nilaiInput("inNama"),
+          wa: nilaiInput("inWa"),
+          alamat: nilaiInput("inAlamat"),
+          waktu: nilaiInput("inWaktu"),
+          ambil: nilai("ambil"),
+          bayar: nilai("bayar"),
+          kapan: nilai("kapan"),
+          langkah,
+        }),
+      );
+    } catch (e) {
+      /* private mode dll — draf mati, form tetep jalan */
+    }
+  }
+
+  function bacaDraf() {
+    try {
+      return JSON.parse(sessionStorage.getItem(DRAF_KEY) || "null");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function hapusDraf() {
+    try {
+      sessionStorage.removeItem(DRAF_KEY);
+    } catch (e) {
+      /* abaikan */
+    }
+  }
+
+  // isi ulang form + keranjang dari draf (dipanggil abis menu ke-load)
+  function pulihkanDraf(d) {
+    if (!d) return;
+
+    // keranjang: buang item yang id-nya udah gak ada / gak tersedia lagi
+    const idAda = new Set(daftar.map((m) => m.id));
+    keranjang = (Array.isArray(d.keranjang) ? d.keranjang : [])
+      .filter((i) => i && idAda.has(Number(i.id)))
+      .map((i) => ({
+        id: Number(i.id),
+        nama: i.nama,
+        harga: Number(i.harga) || 0,
+        qty: Number(i.qty) || 1,
+        level: Number(i.level) || 0,
+      }));
+    lvlDraf = new Map(Array.isArray(d.lvl) ? d.lvl : []);
+
+    const isi = {
+      inNama: d.nama,
+      inWa: d.wa,
+      inAlamat: d.alamat,
+      inWaktu: d.waktu,
+    };
+    Object.keys(isi).forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && isi[id]) el.value = isi[id];
+    });
+
+    // radio pilihan + state tampilnya (alamat / peta / jam custom / ongkir)
+    [
+      ["ambil", d.ambil],
+      ["bayar", d.bayar],
+      ["kapan", d.kapan || "sekarang"],
+    ].forEach(([nama, v]) => {
+      if (!v) return;
+      const inp = document.querySelector(`input[name="${nama}"][value="${v}"]`);
+      if (!inp) return;
+      inp.checked = true;
+      const lbl = inp.closest(".opsi");
+      lbl.parentElement
+        .querySelectorAll(".opsi")
+        .forEach((o) => o.classList.toggle("pilih", o === lbl));
+    });
+    const ambilKini = nilai("ambil");
+    document.getElementById("fieldAlamat").hidden = ambilKini !== "cod";
+    document.getElementById("catatanOngkir").hidden = ambilKini !== "cod";
+    document.getElementById("petaToko").hidden = ambilKini !== "ambil";
+    document.getElementById("fieldWaktu").hidden = nilai("kapan") !== "custom";
+
+    daftar.forEach((m) => patchKartu(m.id)); // stepper qty + chip level balik
+    renderRingkas();
+    tampilLangkah(Math.min(Number(d.langkah) || 1, MAKS_LANGKAH), false);
+
+    if (keranjang.length || d.nama) {
+      showToast("Lanjut ya — pilihan tadi masih ke-save 😉", "info");
+    }
+  }
+
+  // ── panel slide-up: daftar menu yang dipilih (klik total di bar bawah) ──
+  function sheetTerbuka() {
+    return document
+      .getElementById("sheetKeranjang")
+      .classList.contains("terbuka");
+  }
+  function toggleSheet(buka) {
+    const s = document.getElementById("sheetKeranjang");
+    const t = document.getElementById("tiraiSheet");
+    const mau = buka === undefined ? !sheetTerbuka() : buka;
+
+    // isi panel DULU sebelum apa pun — biar kalo ada yang error di
+    // bawah, panel tetep keisi (bukan kebuka kosong)
+    if (mau) renderSheet();
+
+    s.classList.toggle("terbuka", mau);
+    t.classList.toggle("terbuka", mau);
+    s.setAttribute("aria-hidden", String(!mau));
+    t.setAttribute("aria-hidden", String(!mau));
+
+    // chevron: Font Awesome udah nukar <i> → <svg>, dan className
+    // di <svg> itu read-only (nulisnya bikin TypeError) — pake classList
+    const chev = document.getElementById("totalChevron");
+    if (chev && chev.classList) {
+      chev.classList.toggle("fa-chevron-down", mau);
+      chev.classList.toggle("fa-chevron-up", !mau);
+    }
+  }
+  function renderSheet() {
+    const box = document.getElementById("sheetItems");
+    const totalBox = document.querySelector("#sheetKeranjang .rincian-total");
+    const kosong = !keranjang.length;
+    if (box) box.hidden = kosong;
+    if (totalBox) totalBox.hidden = kosong;
+    const kosongEl = document.getElementById("sheetKosong");
+    if (kosongEl) kosongEl.hidden = !kosong;
+    if (!box) return;
+    box.innerHTML =
+      keranjang
+        .map(
+          (i) =>
+            `<li><span>${esc(i.nama)} ${i.qty}x${i.level > 0 ? ` <b class="lvl-item">🌶️${i.level}</b>` : ""}</span><b>${rupiah(i.qty * i.harga)}</b></li>`,
+        )
+        .join("") +
+      (ongkir()
+        ? `<li><span>Ongkir COD <b class="lvl-item">gak fix</b></span><b>+${rupiah(ongkir())}</b></li>`
         : "");
+    const tot = document.getElementById("sheetTotal");
+    if (tot) tot.textContent = rupiah(totalBayar());
+    const badge = document.getElementById("sheetJml");
+    if (badge) badge.textContent = jml() + " item"; // jumlah item di judul
   }
 
   // ── pilihan opsi (level / ambil / bayar) + input WA ──
@@ -342,7 +592,8 @@ const Pesen = (function () {
       const baru = formatWa(normWa(inpWa.value));
       if (inpWa.value !== baru) {
         inpWa.value = baru;
-        let hitung = 0, i = 0;
+        let hitung = 0,
+          i = 0;
         for (; i < baru.length && hitung < digitSebelum; i++) {
           if (/\d/.test(baru[i])) hitung++;
         }
@@ -355,13 +606,16 @@ const Pesen = (function () {
       document.getElementById(id).addEventListener("change", (e) => {
         const lbl = e.target.closest(".opsi");
         if (!lbl) return;
-        lbl.parentElement.querySelectorAll(".opsi").forEach((o) => o.classList.toggle("pilih", o === lbl));
+        lbl.parentElement
+          .querySelectorAll(".opsi")
+          .forEach((o) => o.classList.toggle("pilih", o === lbl));
         // alamat cuma muncul kalo COD; peta ilustrasi cuma muncul kalo ambil di toko
         if (e.target.name === "ambil") {
           const cod = e.target.value === "cod";
           document.getElementById("fieldAlamat").hidden = !cod;
           if (!cod) document.getElementById("inAlamat").value = "";
-          document.getElementById("petaToko").hidden = e.target.value !== "ambil";
+          document.getElementById("petaToko").hidden =
+            e.target.value !== "ambil";
           document.getElementById("catatanOngkir").hidden = !cod; // keterangan ongkir
           renderRingkas(); // total bar + ringkasan ikut +ongkir
         }
@@ -371,12 +625,23 @@ const Pesen = (function () {
           document.getElementById("fieldWaktu").hidden = !custom;
           if (!custom) document.getElementById("inWaktu").value = "";
         }
+        simpanDraf(); // pilihan opsi apa pun ikut kesimpen
       });
     });
 
+    // isian teks (nama / WA / alamat / jam custom) — tiap ketikan kesimpen
+    ["inNama", "inWa", "inAlamat", "inWaktu"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", simpanDraf);
+    });
+
     // tanggal besok buat label opsi "Besok" ("Min, 1 Nov")
-    document.getElementById("capBesok").textContent =
-      new Date(Date.now() + 864e5).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" });
+    document.getElementById("capBesok").textContent = new Date(
+      Date.now() + 864e5,
+    ).toLocaleDateString("id-ID", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
   }
 
   // ── kirim ──
@@ -386,7 +651,10 @@ const Pesen = (function () {
     // (kirim tombolnya cuma ada di langkah konfirmasi, tapi jaga-jaga
     //  misal user ngelewatin lewat devtools dll)
     for (let n = 1; n < MAKS_LANGKAH; n++) {
-      if (!validLangkah(n)) { tampilLangkah(n); return; }
+      if (!validLangkah(n)) {
+        tampilLangkah(n);
+        return;
+      }
     }
 
     const nama = document.getElementById("inNama").value.trim();
@@ -395,26 +663,49 @@ const Pesen = (function () {
     const bayar = nilai("bayar");
     const alamat = document.getElementById("inAlamat").value.trim();
     const kapan = nilai("kapan") || "sekarang";
-    const waktuTeks = kapan === "custom" ? document.getElementById("inWaktu").value.trim() : null;
+    const waktuTeks =
+      kapan === "custom"
+        ? document.getElementById("inWaktu").value.trim()
+        : null;
 
     const btn = document.getElementById("btnKirim");
     btn.disabled = true;
 
     try {
       const res = await TmDb.kirimPesanan({
-        nama, wa, catatan: "",
-        items: keranjang.map((i) => ({ id: i.id, qty: i.qty, level: i.level || 0 })),
+        nama,
+        wa,
+        catatan: "",
+        items: keranjang.map((i) => ({
+          id: i.id,
+          qty: i.qty,
+          level: i.level || 0,
+        })),
         // level_pedas kolom = level tertinggi (buat ringkasan dapur/lama);
         // detail per item ada di dalam items
         level: keranjang.reduce((mx, i) => Math.max(mx, i.level || 0), 0),
-        ambil, alamat, bayar, kapan, waktuTeks,
+        ambil,
+        alamat,
+        bayar,
+        kapan,
+        waktuTeks,
       });
       // gak ada popup di sini — langsung lempar ke halaman "Pesenan Aku"
       // (snapshot disimpen dulu biar halaman barunya bisa gambar detail
       //  tanpa nunggu jaringan, terus diganti data asli dari DB)
       simpanLaluPergi(res, {
-        nama, ambil, alamat, bayar, kapan, waktuTeks,
-        items: keranjang.map((i) => ({ nama: i.nama, qty: i.qty, level: i.level || 0, harga: i.harga })),
+        nama,
+        ambil,
+        alamat,
+        bayar,
+        kapan,
+        waktuTeks,
+        items: keranjang.map((i) => ({
+          nama: i.nama,
+          qty: i.qty,
+          level: i.level || 0,
+          harga: i.harga,
+        })),
       });
     } catch (err) {
       showToast(TmDb.pesanRamah(err), "error");
@@ -442,9 +733,9 @@ const Pesen = (function () {
       created_at: new Date().toISOString(),
       _snapshot: true, // tanda: ini data sementara, nanti ditimpa data DB
     };
-    try {
-      sessionStorage.setItem("tm_pesenan_aku", JSON.stringify(snap));
-    } catch (e) { /* private mode dll — halaman baru tinggal minta kode */ }
+    // masukin ke RIWAYAT (localStorage) — halaman Pesenan Aku baca dari situ,
+    // gak pake ?kode= lagi, jadi semua pesenan lama tetep kebuka
+    simpanKeRiwayat(snap);
 
     // form + keranjang dibersihin dulu: kalo pelanggan tombol "back",
     // halaman gak nunjukin keranjang basi (bisa kekirim dobel)
@@ -455,24 +746,48 @@ const Pesen = (function () {
     document.getElementById("petaToko").hidden = true;
     document.getElementById("fieldWaktu").hidden = true;
     document.getElementById("catatanOngkir").hidden = true; // gak ada pilihan COD lagi
-    document.querySelectorAll("#opsiAmbil .opsi, #opsiBayar .opsi").forEach((o) => o.classList.remove("pilih"));
+    document
+      .querySelectorAll("#opsiAmbil .opsi, #opsiBayar .opsi")
+      .forEach((o) => o.classList.remove("pilih"));
     // reset() balikin radio "sekarang" ke checked — class .pilih-nya ikut dipasang lagi
-    document.querySelector('#opsiKapan .opsi input[value="sekarang"]').closest(".opsi").classList.add("pilih");
+    document
+      .querySelector('#opsiKapan .opsi input[value="sekarang"]')
+      .closest(".opsi")
+      .classList.add("pilih");
     daftar.forEach((m) => patchKartu(m.id)); // patch per kartu — foto gak dilepas, gak kedip
     renderRingkas();
     tampilLangkah(1, false); // balik ke langkah 1 (kalo redirect kepentok)
+    hapusDraf(); // pesenan udah masuk — draf form gak usah disimpen lagi
 
-    location.href = "pesenan-aku.html?kode=" + encodeURIComponent(res.kode);
+    location.href = "pesenan-aku";
+  }
+
+  // ── riwayat pesenan (localStorage) ──
+  // bentuk barisnya SAMA kaya tabel pesanan, paling baru di atas,
+  // disimpen paling banyak 20 biar storage gak numpuk.
+  function simpanKeRiwayat(snap) {
+    try {
+      const KEY = "tm_history_pesenan";
+      const arr = JSON.parse(localStorage.getItem(KEY) || "[]");
+      const list = Array.isArray(arr) ? arr.filter((p) => p && p.kode) : [];
+      const lama = list.findIndex((p) => p.kode === snap.kode);
+      if (lama >= 0) list.splice(lama, 1);
+      list.unshift(snap);
+      localStorage.setItem(KEY, JSON.stringify(list.slice(0, 20)));
+    } catch (e) {
+      /* storage mati — halaman baru tinggal fetch sendiri */
+    }
   }
 
   // ── init ──
   async function mulai() {
+    const draf = bacaDraf(); // dibaca DULU sebelum render apa pun
     renderSemua();
     pasangOpsi();
 
     // link "Lihat Google Maps" di peta ilustrasi (kata kunci dari config)
     document.getElementById("btnGmaps").href =
-      "https://maps.app.goo.gl/4pnqfbtSeEEeg9NC9" ;
+      "https://maps.app.goo.gl/4pnqfbtSeEEeg9NC9";
 
     // klik di kartu menu: stepper − qty + / level pedas
     document.getElementById("gridPilih").addEventListener("click", (e) => {
@@ -494,6 +809,17 @@ const Pesen = (function () {
     document.getElementById("btnBack").addEventListener("click", mundur);
     document.getElementById("btnBalik").addEventListener("click", mundur);
 
+    // panel slide-up: klik total di bar bawah buat liat menu yang dipilih
+    document
+      .getElementById("btnTotal")
+      .addEventListener("click", () => toggleSheet());
+    document
+      .getElementById("btnTutupSheet")
+      .addEventListener("click", () => toggleSheet(false));
+    document
+      .getElementById("tiraiSheet")
+      .addEventListener("click", () => toggleSheet(false));
+
     // mulai dari langkah 1 (gulir=false: halaman baru jangan langsung nge-scroll)
     tampilLangkah(1, false);
 
@@ -501,14 +827,19 @@ const Pesen = (function () {
     try {
       daftar = await TmDb.muatMenu();
       renderSemua();
+      drafSiap = true; // draf udah kebaca — mulai dari sini boleh nulis
+      pulihkanDraf(draf); // isi ulang keranjang + form + langkah tadi
     } catch (err) {
-      document.getElementById("gridPilih").innerHTML = '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';        
+      document.getElementById("gridPilih").innerHTML =
+        '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
       showToast(TmDb.pesanRamah(err), "error");
     }
     try {
       const info = await TmDb.infoWarung();
       TmDb.terapkanBg(info.bg || ""); // foto latar dari setting (kosong = gradient)
-    } catch (e) { /* latar tetep gradient hangat kalo gagal */ }
+    } catch (e) {
+      /* latar tetep gradient hangat kalo gagal */
+    }
   }
 
   document.addEventListener("DOMContentLoaded", mulai);

@@ -1,76 +1,101 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teras Mbun — Pesen Enak, Tanpa Ribet</title>
-  <meta name="description" content="Pesen makanan Teras Mbun lewat web. Pilih menu, kirim pesenan, tinggal nunggu siap.">
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2a1810">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="index.html">
-        <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
-        <span class="nama">Teras Mbun</span>
-      </a>
-      <div class="top-right">
-        <div class="dropdown" id="navDropdown">
-          <button class="btn btn-kecil btn-kaca btn-titik" id="btnNavMenu"
-                  aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="navPanel">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-          </button>
-          <nav class="dropdown-panel" id="navPanel" hidden>
-            <!-- link section di-render dari NAV_SECTIONS di js/menu.js -->
-          </nav>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teras Mbun — Pesen Enak, Tanpa Ribet</title>
+    <meta
+      name="description"
+      content="Pesen makanan Teras Mbun lewat web. Pilih menu, kirim pesenan, tinggal nunggu siap."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#2a1810" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Outfit:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="index">
+          <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
+          <span class="nama">Teras Mbun</span>
+        </a>
+        <div class="top-right">
+          <div class="dropdown" id="navDropdown">
+            <button
+              class="btn btn-kecil btn-kaca btn-titik"
+              id="btnNavMenu"
+              aria-label="Buka menu navigasi"
+              aria-expanded="false"
+              aria-controls="navPanel"
+            >
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <nav class="dropdown-panel" id="navPanel" hidden>
+              <!-- link section di-render dari NAV_SECTIONS di js/menu.js -->
+            </nav>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- ===== GREETING: full satu layar, di atas ===== -->
-  <section class="greeting" id="greeting">
-    <div class="greet-inner">
-      <span class="greet-emoji">🍜</span>
-      <p class="greet-halo">Selamat datang di</p>
-      <h1 class="greet-judul">Teras <em>Mbun</em></h1>
-      <p class="greet-sub">Pesen enak tanpa ribet. Pilih menu, kirim, tunggu siap — gak usah antri di WA.</p>
-      <div class="greet-aksi">
-        <a class="btn btn-besar" href="pesen.html">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></a>
-      </div>
-      <span class="greet-scroll"><i class="fa-solid fa-chevron-down"></i> scroll buat liat menu</span>
-    </div>
-  </section>
-
-  <main class="wrap">
-    <!-- ===== SECTION 1: showcase menu (kartu + foto + deskripsi) ===== -->
-    <section class="seksi" id="daftar">
-      <div class="menu-tampil" id="menuTampil">
-        <p class="kosong"><i class="fa-solid fa-spinner fa-spin"></i> Muat menu…</p>
+    <!-- ===== GREETING: full satu layar, di atas ===== -->
+    <section class="greeting" id="greeting">
+      <div class="greet-inner">
+        <span class="greet-emoji">🍜</span>
+        <p class="greet-halo">Selamat datang di</p>
+        <h1 class="greet-judul">Teras <em>Mbun</em></h1>
+        <p class="greet-sub">
+          Pesen enak tanpa ribet. Pilih menu, kirim, tunggu siap — gak usah
+          antri di WA.
+        </p>
+        <div class="greet-aksi">
+          <a class="btn btn-besar" href="pesen"
+            >Pesan Sekarang <i class="fa-solid fa-arrow-right"></i
+          ></a>
+        </div>
+        <span class="greet-scroll"
+          ><i class="fa-solid fa-chevron-down"></i> scroll buat liat menu</span
+        >
       </div>
     </section>
 
-    <!-- ===== SECTION 2: pesenan pindah ke pesen.html ===== -->
-  </main>
+    <main class="wrap">
+      <!-- ===== SECTION 1: showcase menu (kartu + foto + deskripsi) ===== -->
+      <section class="seksi" id="daftar">
+        <div class="menu-tampil" id="menuTampil">
+          <p class="kosong">
+            <i class="fa-solid fa-spinner fa-spin"></i> Muat menu…
+          </p>
+        </div>
+      </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/toast.js"></script>
-  <script src="js/notice.js"></script>
-  <script src="js/show-popup.js"></script>
-  <script src="js/db.js"></script>
-  <script src="js/menu.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
-    }
-  </script>
-</body>
+      <!-- ===== SECTION 2: pesenan pindah ke pesen ===== -->
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/notice.js"></script>
+    <script src="js/show-popup.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/menu.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () =>
+          navigator.serviceWorker.register("sw.js"),
+        );
+      }
+    </script>
+  </body>
 </html>

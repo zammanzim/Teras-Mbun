@@ -1,5 +1,5 @@
 -- =========================================================================
--- MIGRASI 004 — form pemesanan baru (pesen.html)
+-- MIGRASI 004 — form pemesanan baru (pesen)
 -- Kolom tambahan di pesanan: level pedas, cara terima (cod/ambil),
 -- alamat (wajib kalo cod), cara bayar (qris/tunai).
 -- RPC buat_pesanan ditulis ulang (signature lama DI-drop dulu biar

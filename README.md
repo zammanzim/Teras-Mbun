@@ -1,7 +1,7 @@
 # TERAS MBUN — Web Pesenan
 
 Web pesenan buat jualan makanan, biar gak pusing nerima pesenan lewat WA.
-Customer pilih menu + kirim pesenan tanpa login; admin dapur buka `dapur.html`,
+Customer pilih menu + kirim pesenan tanpa login; admin dapur buka `dapur`,
 masuk PIN, ceklis status pesenan (`menunggu → dibuat → siap`).
 
 Stack: **vanilla HTML/CSS/JS, tanpa framework, tanpa build step.**
@@ -11,17 +11,17 @@ Deploy: **GitHub Pages** (`terasmbun.github.io`).
 ## Struktur
 
 ```
-index.html            # sisi customer: hero, showcase menu (semua menu tampil)
-pesen.html            # halaman pesen: kartu menu per kategori + keranjang + form
-pesenan-aku.html      # halaman pesenan ku: detail + status live + foto QRIS
-dapur.html            # sisi admin dapur: gate PIN, daftar realtime, ceklis status
-admin.html            # sisi admin: gate PIN, kelola menu penuh + foto latar, QRIS, menu
+index            # sisi customer: hero, showcase menu (semua menu tampil)
+pesen            # halaman pesen: kartu menu per kategori + keranjang + form
+pesenan-aku      # halaman pesenan ku: RIWAYAT semua pesenan (localStorage) + status live + QRIS
+dapur            # sisi admin dapur: gate PIN, daftar realtime, ceklis status
+admin            # sisi admin: gate PIN, kelola menu penuh + foto latar, QRIS, menu
 css/style.css         # design system (palet hangat coklat-krem-hijau)
 js/config.js          # URL + anon key Supabase (publik, aman)
 js/db.js              # layer DB: baca langsung, nulis via RPC, upload foto
 js/menu.js            # logic sisi customer (index)
 js/pesen.js           # logic halaman pesen (stepper langsung masuk keranjang, level per item)
-js/pesenan-aku.js     # logic halaman pesenan aku (kode → detail, patch status live)
+js/pesenan-aku.js     # logic riwayat pesenan aku (localStorage → kartu per pesanan, patch status live)
 js/dapur.js           # logic sisi dapur
 js/admin.js           # logic halaman admin (CRUD menu + foto: kompres → upload → RPC PIN)
 js/toast.js           # toast bawaan (pola osistarpanone)
@@ -77,7 +77,7 @@ set value = '628xxxxxxxxxx'   -- format internasional tanpa +
 where key = 'wa_penjual';
 ```
 
-## Admin (admin.html)
+## Admin (admin)
 
 Halaman admin — masuk PIN (sama kayak dapur), bisa:
 
@@ -92,7 +92,7 @@ Halaman admin — masuk PIN (sama kayak dapur), bisa:
 - **Foto QRIS** — otomatis muncul di halaman pesen buat pelanggan yang
   pilih bayar QRIS (sesudah pesenan dibuat).
 
-Akses: tombol kamera di topbar dapur, atau langsung `admin.html`.
+Akses: tombol kamera di topbar dapur, atau langsung `admin`.
 
 Foto disimpen di bucket **`terasmbun-media`** (public) — bukan di repo.
 Yang diupload otomatis dikompres dulu di browser (maks. sisi 1200px,
@@ -103,11 +103,11 @@ bucket ini. Migrasi: `db/007-media-storage.sql` + `db/008-media-warung.sql`.
 
 ## Alur pemakaian
 
-1. Customer buka `index.html` → pilih menu → keranjang → isi nama → kirim.
+1. Customer buka `index` → pilih menu → keranjang → isi nama → kirim.
 2. Dapet kode pesenan (mis. `#007`) + opsi share ke WA penjual.
-3. Admin buka `dapur.html` → PIN → lihat daftar (realtime, ke-update sendiri).
+3. Admin buka `dapur` → PIN → lihat daftar (realtime, ke-update sendiri).
 4. Ceklis: **Mulai masak** (`menunggu → dibuat`) → **Beres** (`dibuat → siap`).
-5. Customer cek status di `index.html` pakai kodenya (juga realtime).
+5. Customer cek status di `index` pakai kodenya (juga realtime).
 
 ## Catatan jujur
 

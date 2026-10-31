@@ -81,6 +81,20 @@ const TmDb = (function () {
       return (data && data[0]) || null;
     },
 
+    // Versi BANYAK kode (riwayat pesenan-aku: satu request buat semua kartu)
+    async muatPesananByKodes(kodes) {
+      const list = (Array.isArray(kodes) ? kodes : [kodes])
+        .map((k) => String(k || "").trim()).filter(Boolean);
+      if (!list.length) return [];
+      const { data, error } = await supa
+        .from("pesanan")
+        .select("*")
+        .in("kode", list)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+
     async infoWarung() {
       const { data, error } = await supa.rpc("info_warung");
       if (error) throw error;

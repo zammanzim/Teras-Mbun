@@ -4,7 +4,8 @@ Foto menu **udah pindah ke Supabase Storage** — bucket `terasmbun-media`,
 dipakai lewat kolom `gambar` di tabel `terasmbun.menu`.
 
 Cara ganti foto menu sekarang (gak perlu SQL):
-1. Buka `dapur.html`, masukin PIN.
+
+1. Buka `dapur`, masukin PIN.
 2. Klik tombol **kamera** (atas) — panel "Foto Menu" muncul.
 3. Klik **Pasang / Ganti** di menu yang mau — pilih foto dari galeri.
    Foto otomatis dikompres di browser (maks. 1200px, JPEG) sebelum diupload.

@@ -3,14 +3,14 @@
 // Cache-first buat aset statis; Supabase selalu network.
 // Ingat: tiap ubah file yang di-precache, BUMP versi cache di bawah.
 // ============================================================
-const CACHE = "terasmbun-v48";
+const CACHE = "terasmbun-v52";
 const PRECACHE = [
   "./",
-  "index.html",
-  "pesen.html",
-  "pesenan-aku.html",
-  "dapur.html",
-  "admin.html",
+  "index",
+  "pesen",
+  "pesenan-aku",
+  "dapur",
+  "admin",
   "css/style.css",
   "js/config.js",
   "js/db.js",
@@ -32,9 +32,13 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -43,22 +47,22 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   // API Supabase & font eksternal: network first (data harus fresh)
   if (url.origin !== location.origin) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
   }
   // aset same-origin: cache dulu, update di belakang
   e.respondWith(
     caches.match(e.request).then((cached) => {
-      const jaring = fetch(e.request).then((res) => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-        }
-        return res;
-      }).catch(() => cached);
+      const jaring = fetch(e.request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
       return cached || jaring;
-    })
+    }),
   );
 });

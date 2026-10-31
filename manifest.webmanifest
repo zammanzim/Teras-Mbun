@@ -2,7 +2,7 @@
   "name": "Teras Mbun",
   "short_name": "Teras Mbun",
   "description": "Pesen makanan Teras Mbun tanpa ribet di WA.",
-  "start_url": "index.html",
+  "start_url": "index",
   "scope": ".",
   "display": "standalone",
   "background_color": "#f6efe1",
