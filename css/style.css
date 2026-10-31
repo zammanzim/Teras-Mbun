@@ -256,7 +256,8 @@ body::before {
 .tampil-foto:not(.kosong-foto) .foto-emoji { display: none; }
 
 /* ===== Kartu menu (halaman pesen): foto + stepper + tombol ===== */
-/* selalu 2 kolom di SEMUA lebar layar. minmax(0, 1fr) penting: kolom
+/* 2 kolom sampe 360px; di bawah itu (HP kekecilan) turun ke 1 kolom —
+   liat media query 360px di bawah. minmax(0, 1fr) penting: kolom
    dipaksa gak melebihi 1fr — kalo pake 1fr biasa (min-content), konten
    lebar tetap (chips level, stepper) melebarin kolom sampe grid nembus
    viewport → halaman geser/offroad di HP sempit */
@@ -344,24 +345,14 @@ body::before {
   .lvl-chip { width: 22px; height: 22px; font-size: .72rem; border-radius: 7px; }
 }
 
-/* HP super sempit (≤360px) / browser zoom: semua padding & tombol
-   dirapatkan lagi biar 2 kolom tetep muat tanpa nge-scroll samping */
+/* HP super sempit (≤360px) / browser zoom: 2 kolom mulai kekecilan banget —
+   turun ke 1 kolom aja biar kartunya lega, gak dipaksa */
 @media (max-width: 360px) {
   .wrap { padding-left: 12px; padding-right: 12px; }
   .kartu-form { padding: 14px 12px; }
-  .pilih-grid { gap: 8px; }
-  .kartu-menu { padding: 8px; gap: 7px; }
-  .kartu-menu .foto { aspect-ratio: 3 / 2; } /* foto lebih pendek → kartu gak kepanjangan */
-  .kartu-menu .aksi { gap: 6px; }
-  .kartu-menu .qty-btn { width: 28px; height: 28px; font-size: .95rem; border-radius: 9px; }
-  .kartu-menu .qty-num { font-size: .9rem; min-width: 18px; }
-  .kartu-menu .tombol-kartu { gap: 5px; }
-  .kartu-menu .tombol-kartu button { padding: 8px 5px; font-size: .7rem; gap: 3px; }
-  .kartu-menu .btn-batal { width: 28px; padding: 8px 0; }
-  /* level: label di atas, chips center penuh — chip 21px biar 4 muat sebaris */
-  .level-baris { flex-direction: column; align-items: center; gap: 5px; }
-  .lvl-chips { gap: 3px; }
-  .lvl-chip { width: 21px; height: 21px; font-size: .7rem; }
+  .pilih-grid { grid-template-columns: 1fr; gap: 10px; }
+  .kartu-menu { padding: 10px; }
+  .kartu-menu .foto { aspect-ratio: 3 / 2; } /* lebar penuh → foto gak kepanjangan */
 }
 .btn-batal { background: rgba(42, 24, 16, .08); color: var(--coklat); border: 1px solid rgba(42, 24, 16, .2); }
 .btn-masuk { background: linear-gradient(135deg, #37b573, var(--daun)); color: #fff; }
