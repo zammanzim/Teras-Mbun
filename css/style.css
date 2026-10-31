@@ -256,12 +256,16 @@ body::before {
 .tampil-foto:not(.kosong-foto) .foto-emoji { display: none; }
 
 /* ===== Kartu menu (halaman pesen): foto + stepper + tombol ===== */
-/* selalu 2 kolom; di layar sempit jarak+padding dirapatkan */
-.pilih-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+/* selalu 2 kolom di SEMUA lebar layar. minmax(0, 1fr) penting: kolom
+   dipaksa gak melebihi 1fr — kalo pake 1fr biasa (min-content), konten
+   lebar tetap (chips level, stepper) melebarin kolom sampe grid nembus
+   viewport → halaman geser/offroad di HP sempit */
+.pilih-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 420px) { .pilih-grid { gap: 9px; } }
 
 .kartu-menu {
   display: flex; flex-direction: column; gap: 10px;
+  min-width: 0; /* kartu gak boleh minta lebar min-content (biar kolom gak meledak) */
   background: rgba(255, 251, 244, 0.95); color: var(--ink); /* nyaris solid: gak perlu blur */
   border: 1px solid var(--glass-line); border-radius: 18px;
   box-shadow: var(--shadow-sm); padding: 12px;
@@ -292,7 +296,8 @@ body::before {
 .level-baris { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .level-baris.mati .lvl-label { opacity: .45; }
 .lvl-label { font-size: .74rem; font-weight: 800; color: #b53a1c; display: inline-flex; align-items: center; gap: 5px; }
-.lvl-chips { display: flex; gap: 4px; }
+/* wrap: kalo kolomnya sempit, chips pindah baris daripada meledakin grid */
+.lvl-chips { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 .lvl-chip {
   width: 26px; height: 26px; border-radius: 9px; cursor: pointer;
   border: 1px solid rgba(42, 24, 16, .18); background: rgba(255, 255, 255, .75);
@@ -329,11 +334,34 @@ body::before {
   .kartu-menu { padding: 9px; gap: 8px; }
   .kartu-menu .tombol-kartu { gap: 6px; }
   .kartu-menu .tombol-kartu button { padding: 9px 6px; font-size: .74rem; gap: 4px; }
-  .kartu-menu .aksi { gap: 10px; }
+  .kartu-menu .aksi { gap: 8px; }
   /* stepper − 0 + dikecilin */
   .kartu-menu .qty-btn { width: 32px; height: 32px; font-size: 1.05rem; border-radius: 10px; }
   .kartu-menu .qty-num { font-size: .95rem; min-width: 22px; }
   .kartu-menu .btn-batal { width: 32px; padding: 9px 0; }
+  /* label pedas + chips: kalo gak muat sebaris, chips turun ke bawah & center */
+  .level-baris { justify-content: center; }
+  .lvl-chip { width: 22px; height: 22px; font-size: .72rem; border-radius: 7px; }
+}
+
+/* HP super sempit (≤360px) / browser zoom: semua padding & tombol
+   dirapatkan lagi biar 2 kolom tetep muat tanpa nge-scroll samping */
+@media (max-width: 360px) {
+  .wrap { padding-left: 12px; padding-right: 12px; }
+  .kartu-form { padding: 14px 12px; }
+  .pilih-grid { gap: 8px; }
+  .kartu-menu { padding: 8px; gap: 7px; }
+  .kartu-menu .foto { aspect-ratio: 3 / 2; } /* foto lebih pendek → kartu gak kepanjangan */
+  .kartu-menu .aksi { gap: 6px; }
+  .kartu-menu .qty-btn { width: 28px; height: 28px; font-size: .95rem; border-radius: 9px; }
+  .kartu-menu .qty-num { font-size: .9rem; min-width: 18px; }
+  .kartu-menu .tombol-kartu { gap: 5px; }
+  .kartu-menu .tombol-kartu button { padding: 8px 5px; font-size: .7rem; gap: 3px; }
+  .kartu-menu .btn-batal { width: 28px; padding: 8px 0; }
+  /* level: label di atas, chips center penuh — chip 21px biar 4 muat sebaris */
+  .level-baris { flex-direction: column; align-items: center; gap: 5px; }
+  .lvl-chips { gap: 3px; }
+  .lvl-chip { width: 21px; height: 21px; font-size: .7rem; }
 }
 .btn-batal { background: rgba(42, 24, 16, .08); color: var(--coklat); border: 1px solid rgba(42, 24, 16, .2); }
 .btn-masuk { background: linear-gradient(135deg, #37b573, var(--daun)); color: #fff; }
@@ -504,7 +532,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 }
 .form-menu h3 i { color: var(--daun); font-size: .88em; } /* ikon plus/pensil di judul */
 .form-menu textarea { min-height: 64px; } /* deskripsi gak kecil mepet */
-.duo-field { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.duo-field { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } /* minmax(0,…) biar 2 kolom gak meledak di HP sempit */
 .cek-tersedia {
   display: flex; align-items: center; gap: 9px; width: fit-content;
   margin-top: 13px; padding: 9px 13px; border-radius: 11px;
