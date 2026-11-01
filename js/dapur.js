@@ -190,14 +190,48 @@ const Dapur = (function () {
     // jadwal kirim non-"sekarang" ditampilin di atas biar keliatan duluan
     const jadwal = teksJadwal(p)
       ? `<p class="catatan jadwal"><i class="fa-regular fa-calendar"></i> Diantar <b>${esc(teksJadwal(p))}</b></p>` : "";
-    // tombol aksi sesuai status
+    // tombol aksi sesuai status + tombol undo & hapus
     let aksi = "";
     if (p.status === "menunggu") {
-      aksi = `<button class="btn btn-kuning btn-lebar" data-mulai="${p.id}">
-        <i class="fa-solid fa-fire-burner"></i> Mulai masak</button>`;
+      aksi = `
+        <div class="baris-tombol-aksi">
+          <button class="btn btn-kuning btn-lebar" data-mulai="${p.id}">
+            <i class="fa-solid fa-fire-burner"></i> Mulai masak
+          </button>
+        </div>
+        <div class="baris-tombol-sub">
+          <button class="btn btn-kecil btn-hapus-pesan" data-hapus="${p.id}" data-kode="${esc(p.kode)}" data-nama="${esc(p.nama)}" title="Hapus pesanan">
+            <i class="fa-solid fa-trash-can"></i> Hapus
+          </button>
+        </div>`;
     } else if (p.status === "dibuat") {
-      aksi = `<button class="btn btn-hijau btn-lebar" data-siap="${p.id}">
-        <i class="fa-solid fa-check"></i> Beres, siap diambil</button>`;
+      aksi = `
+        <div class="baris-tombol-aksi">
+          <button class="btn btn-hijau btn-lebar" data-siap="${p.id}">
+            <i class="fa-solid fa-check"></i> Beres, siap diambil
+          </button>
+        </div>
+        <div class="baris-tombol-sub">
+          <button class="btn btn-kecil btn-undo-pesan" data-undo="${p.id}" data-ke="menunggu" title="Kembalikan status ke Baru Masuk">
+            <i class="fa-solid fa-rotate-left"></i> Balik ke Baru Masuk
+          </button>
+          <button class="btn btn-kecil btn-hapus-pesan" data-hapus="${p.id}" data-kode="${esc(p.kode)}" data-nama="${esc(p.nama)}" title="Hapus pesanan">
+            <i class="fa-solid fa-trash-can"></i> Hapus
+          </button>
+        </div>`;
+    } else if (p.status === "siap") {
+      aksi = `
+        <div class="baris-tombol-sub">
+          <button class="btn btn-kecil btn-undo-pesan" data-undo="${p.id}" data-ke="dibuat" title="Kembalikan status ke Lagi Dibuat">
+            <i class="fa-solid fa-rotate-left"></i> Balik ke Lagi Dibuat
+          </button>
+          <button class="btn btn-kecil btn-undo-pesan" data-undo="${p.id}" data-ke="menunggu" title="Kembalikan status ke Baru Masuk">
+            <i class="fa-solid fa-arrow-rotate-left"></i> Baru Masuk
+          </button>
+          <button class="btn btn-kecil btn-hapus-pesan" data-hapus="${p.id}" data-kode="${esc(p.kode)}" data-nama="${esc(p.nama)}" title="Hapus pesanan">
+            <i class="fa-solid fa-trash-can"></i> Hapus
+          </button>
+        </div>`;
     }
     return `<div class="baris-pesanan" style="animation-delay:${ix * 30}ms">
       <div class="head">
@@ -219,7 +253,7 @@ const Dapur = (function () {
     </div>`;
   }
 
-  // ── ubah status (kirim PIN tersembunyi tiap kali) ──
+  // ── ubah / undo status pesanan (menunggu ⇄ dibuat ⇄ siap) ──
   async function ubah(id, status, tombol) {
     tombol.disabled = true;
     try {
@@ -229,7 +263,35 @@ const Dapur = (function () {
         keluar();
         return;
       }
-      showToast(status === "dibuat" ? "Oke, lagi dimasak." : "Mantap, siap diambil!");
+      let pesan = "Status pesanan diubah.";
+      if (status === "dibuat") pesan = "Oke, lagi dimasak.";
+      else if (status === "siap") pesan = "Mantap, siap diambil!";
+      else if (status === "menunggu") pesan = "Pesanan dikembalikan ke Baru Masuk.";
+      showToast(pesan, "info");
+      await muat(true);
+    } catch (err) {
+      showToast(TmDb.pesanRamah(err), "error");
+      tombol.disabled = false;
+    }
+  }
+
+  // ── hapus pesanan (wajib PIN bener + konfirmasi) ──
+  async function hapusPesananUi(id, kode, nama, tombol) {
+    const y = await showPopup(
+      `Hapus pesanan #${kode || ""} (${nama || "pelanggan"})? Data pesanan ini akan dihapus permanen.`,
+      "confirm",
+    );
+    if (!y) return;
+
+    tombol.disabled = true;
+    try {
+      const ok = await TmDb.hapusPesanan(id, pin);
+      if (!ok) {
+        showToast("Gagal menghapus pesanan (PIN gak valid).", "error");
+        tombol.disabled = false;
+        return;
+      }
+      showToast(`Pesanan #${kode || ""} berhasil dihapus.`, "info");
       await muat(true);
     } catch (err) {
       showToast(TmDb.pesanRamah(err), "error");
@@ -289,8 +351,19 @@ const Dapur = (function () {
     document.getElementById("daftar").addEventListener("click", (e) => {
       const mulai = e.target.closest("[data-mulai]");
       const siap = e.target.closest("[data-siap]");
+      const undo = e.target.closest("[data-undo]");
+      const hapusBtn = e.target.closest("[data-hapus]");
       if (mulai) ubah(mulai.dataset.mulai, "dibuat", mulai);
       else if (siap) ubah(siap.dataset.siap, "siap", siap);
+      else if (undo) ubah(undo.dataset.undo, undo.dataset.ke, undo);
+      else if (hapusBtn) {
+        hapusPesananUi(
+          hapusBtn.dataset.hapus,
+          hapusBtn.dataset.kode,
+          hapusBtn.dataset.nama,
+          hapusBtn,
+        );
+      }
     });
 
     document.getElementById("btnSegarkan").addEventListener("click", () => {

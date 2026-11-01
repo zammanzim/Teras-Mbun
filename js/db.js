@@ -185,6 +185,15 @@ const TmDb = (function () {
       return !!data;
     },
 
+    async hapusPesanan(id, pin) {
+      const { data, error } = await supa.rpc("hapus_pesanan", {
+        p_id: id,
+        p_pin: String(pin || ""),
+      });
+      if (error) throw error;
+      return !!data;
+    },
+
     // ── foto menu (Supabase Storage, bucket terasmbun-media) ──
     // Kompres dulu di browser: sisi terpanjang dibatasi + dikirim sebagai
     // JPEG — foto dari HP biasanya 3-8MB, sesudah kompres tinggal ~100KB.
