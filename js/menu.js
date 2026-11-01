@@ -98,6 +98,18 @@ const Menu = (function () {
     renderTampil();
     // (dropdown hamburger diurus js/nav.js — header seragam)
 
+    // tombol scroll ke daerah menu
+    ["btnLihatMenu", "btnScrollMenu"].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const el = document.getElementById("daftar");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    });
+
     // muat menu
     try {
       daftar = await TmDb.muatMenu();
