@@ -103,8 +103,18 @@ const Dapur = (function () {
   // ── muat + render pengunjung (visitor per device) ──
   async function muatPengunjung() {
     const box = document.getElementById("daftarPengunjung");
+    const elDevice = document.getElementById("countDevice");
+    const elHits = document.getElementById("countTotalHits");
     try {
       const rows = await TmDb.daftarKunjungan(pin);
+      const totalDevice = Array.isArray(rows) ? rows.length : 0;
+      const totalHits = Array.isArray(rows)
+        ? rows.reduce((acc, v) => acc + (Number(v.jumlah) || 1), 0)
+        : 0;
+
+      if (elDevice) elDevice.textContent = `${totalDevice} device`;
+      if (elHits) elHits.innerHTML = `<i class="fa-solid fa-chart-simple"></i> ${totalHits}x dibuka`;
+
       if (!rows.length) {
         box.innerHTML = '<p class="kosong">Belum ada kunjungan kesimpen.</p>';
         return;
@@ -126,6 +136,8 @@ const Dapur = (function () {
         })
         .join("");
     } catch (e) {
+      if (elDevice) elDevice.textContent = "0 device";
+      if (elHits) elHits.innerHTML = '<i class="fa-solid fa-chart-simple"></i> 0x dibuka';
       box.innerHTML = '<p class="kosong">Gagal muat pengunjung.</p>';
     }
   }

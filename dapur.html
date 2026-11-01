@@ -115,7 +115,15 @@
 
         <!-- pengunjung web (visitor per device) — muat abis masuk PIN -->
         <section class="media-kartu" id="kartuPengunjung" style="margin-top: 20px">
-          <h2><i class="fa-solid fa-users"></i> Pengunjung</h2>
+          <div class="baris-judul-pengunjung">
+            <h2>
+              <i class="fa-solid fa-users"></i> Pengunjung
+              <span class="tag-info tag-badge-device" id="countDevice">0 device</span>
+            </h2>
+            <span class="tag-info tag-badge-hits" id="countTotalHits" title="Total seluruh kunjungan">
+              <i class="fa-solid fa-chart-simple"></i> 0x dibuka
+            </span>
+          </div>
           <p class="petunjuk">
             Device yang pernah masuk — ditandai per device ID. Klik barisnya
             buat salin ID-nya.

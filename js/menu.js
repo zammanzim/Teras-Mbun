@@ -93,9 +93,64 @@ const Menu = (function () {
   // ── daftar section di dropdown hamburger ──
   // (pindah ke js/nav.js — header seragam di semua halaman)
 
+  // ── floating button pesan sekarang (muncul pas scroll menu, hilang di paling atas / bawah) ──
+  function pasangFloatingPesan() {
+    const floatBtn = document.getElementById("floatPesan");
+    const greeting = document.getElementById("greeting");
+    const ctaBawah = document.getElementById("ctaBawah");
+    if (!floatBtn) return null;
+
+    let ticking = false;
+
+    function atur() {
+      ticking = false;
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      const innerH = window.innerHeight;
+      const scrollH = document.documentElement.scrollHeight;
+
+      // 1. Paling atas: greeting masih menempati area layar utama
+      let diAtas = scrollY < 180;
+      if (greeting) {
+        const gRect = greeting.getBoundingClientRect();
+        if (gRect.bottom > innerH * 0.35) diAtas = true;
+      }
+
+      // 2. Paling bawah: ctaBawah sudah terlihat atau sudah mentok scroll
+      let diBawah = false;
+      if (scrollY + innerH >= scrollH - 60) {
+        diBawah = true;
+      }
+      if (ctaBawah) {
+        const cRect = ctaBawah.getBoundingClientRect();
+        if (cRect.top < innerH - 70) {
+          diBawah = true;
+        }
+      }
+
+      const harusMuncul = !diAtas && !diBawah;
+      floatBtn.classList.toggle("muncul", harusMuncul);
+      floatBtn.setAttribute("aria-hidden", String(!harusMuncul));
+    }
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!ticking) {
+          requestAnimationFrame(atur);
+          ticking = true;
+        }
+      },
+      { passive: true },
+    );
+    window.addEventListener("resize", atur, { passive: true });
+    atur();
+    return atur;
+  }
+
   // ── init ──
   async function mulai() {
     renderTampil();
+    const aturFloat = pasangFloatingPesan();
     // (dropdown hamburger diurus js/nav.js — header seragam)
 
     // tombol scroll ke daerah menu
@@ -114,6 +169,7 @@ const Menu = (function () {
     try {
       daftar = await TmDb.muatMenu();
       renderTampil();
+      if (aturFloat) aturFloat();
     } catch (err) {
       document.getElementById("menuTampil").innerHTML =
         '<p class="kosong">Menu gagal dimuat. Coba refresh.</p>';
