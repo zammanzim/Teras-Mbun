@@ -220,13 +220,29 @@ body::before {
   font-weight: 700;
   border-radius: 12px;
 }
-.btn-titik {
-  padding: 8px 12px;
+/* tombol nav: hamburger polos — tanpa kotak/kaca, cuma ikon */
+.btn-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--putih);
+  font-size: 1.4rem;
+  border-radius: 12px;
+  transition: background 0.15s ease;
 }
-.btn-titik i {
+.btn-hamburger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.btn-hamburger i {
   transition: transform 0.2s ease;
 }
-.btn-titik[aria-expanded="true"] i {
+.btn-hamburger[aria-expanded="true"] i {
   transform: rotate(90deg);
 }
 
