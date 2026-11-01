@@ -128,7 +128,9 @@ const PesenanAku = (function () {
     // baris info
     const baris = [];
     baris.push(["fa-regular fa-clock", "Dibuat", tanggal(p.created_at)]);
-    baris.push(["fa-regular fa-calendar", "Diantar kapan", teksJadwal(p)]);
+    if (p.metode_ambil === "cod") {
+      baris.push(["fa-regular fa-calendar", "Diantar kapan", teksJadwal(p)]);
+    }
     baris.push([
       p.metode_ambil === "cod" ? "fa-solid fa-motorcycle" : "fa-solid fa-store",
       p.metode_ambil === "cod" ? "Diantar" : "Ambil di toko",
@@ -201,14 +203,16 @@ const PesenanAku = (function () {
         </p>
       </div>
 
+      <!-- QRIS (kalo bayarnya qris): paling atas, tepat di bawah
+           tombol Hubungi Penjual — biar user tinggal scan -->
+      ${qrisHtml}
+
       <h3 class="aku-judul"><i class="fa-solid fa-receipt"></i> Rincian</h3>
       <ul class="daftar-item">${daftarItem || "<li>Belum ada rincian.</li>"}</ul>
       <p class="rincian-total"><span>Total: </span><b>${rupiah(p.total)}</b></p>
 
       <h3 class="aku-judul"><i class="fa-solid fa-circle-info"></i> Info</h3>
       <div class="aku-info">${infoHtml}</div>
-
-      ${qrisHtml}
 
       <div class="aku-baris-aksi">
         <a class="btn btn-kecil btn-kaca" href="pesen"><i class="fa-solid fa-plus"></i> Pesan lagi</a>

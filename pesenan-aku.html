@@ -30,12 +30,20 @@
           <span class="nama">Teras Mbun</span>
         </a>
         <div class="top-right">
-          <a class="btn btn-kecil btn-kaca" href="pesen"
-            ><i class="fa-solid fa-plus"></i> Pesan lagi</a
-          >
-          <a class="btn btn-kecil btn-kaca" href="/ "
-            ><i class="fa-solid fa-house"></i> Beranda</a
-          >
+          <div class="dropdown" id="navDropdown">
+            <button
+              class="btn-hamburger"
+              id="btnNavMenu"
+              aria-label="Buka menu navigasi"
+              aria-expanded="false"
+              aria-controls="navPanel"
+            >
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <nav class="dropdown-panel" id="navPanel" hidden>
+              <!-- link section di-render dari js/nav.js -->
+            </nav>
+          </div>
         </div>
       </div>
     </header>
@@ -81,14 +89,9 @@
     <script src="js/toast.js"></script>
     <script src="js/notice.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/nav.js"></script>
     <script src="js/visitor.js"></script>
     <script src="js/pesenan-aku.js"></script>
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () =>
-          navigator.serviceWorker.register("sw.js"),
-        );
-      }
-    </script>
+    <script src="js/pwa-refresh.js"></script>
   </body>
 </html>

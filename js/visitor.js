@@ -76,7 +76,10 @@ const TmVisitor = (function () {
 
   // ── catat 1 kunjungan (fire & forget) ──
   function catat() {
-    if (!window.TmDb || !TmDb.supa) return; // db.js belum ke-load
+    // PENTING: jangan pake window.TmDb — db.js mendeklarasi
+    // `const TmDb = ...` (global lexical binding, BUKAN property window),
+    // jadi window.TmDb selalu undefined. Ceknya pake typeof.
+    if (typeof TmDb === "undefined" || !TmDb.supa) return; // db.js belum ke-load
     try {
       TmDb.supa
         .rpc("catat_kunjungan", {

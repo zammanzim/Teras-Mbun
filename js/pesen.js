@@ -245,26 +245,55 @@ const Pesen = (function () {
 
   // ── wizard: 1 kartu tampil per langkah ──
   // langkah 1..5 = form, 6 = konfirmasi (tombol kirim ada di dalem kartu,
-  // bar bawah sengaja disembunyiin di langkah 6 — ilang + gak ganggu)
+  // bar bawah sengaja disembunyiin di langkah 6 — ilang + gak ganggu).
+  // Khusus kalo user pilih "Ambil di toko", langkah 5 (kapan diantar)
+  // dilewati otomatis (total jadi 5 langkah).
   const MAKS_LANGKAH = 6;
   let langkah = 1;
 
   const nilai = (nama) =>
     (document.querySelector(`input[name="${nama}"]:checked`) || {}).value || "";
 
+  const cumaAmbil = () => nilai("ambil") === "ambil";
+
+  function langkahBerikutnya(dari) {
+    if (cumaAmbil() && dari === 4) return 6; // lewati langkah 5 (kapan diantar)
+    return Math.min(MAKS_LANGKAH, dari + 1);
+  }
+
+  function langkahSebelumnya(dari) {
+    if (cumaAmbil() && dari === 6) return 4; // balik langsung ke langkah 4
+    return Math.max(1, dari - 1);
+  }
+
+  function perbaruiIndikator() {
+    const ambilDiToko = cumaAmbil();
+    const total = ambilDiToko ? 5 : 6;
+    // nomor langkah visual: kalo ambil di toko, langkah 6 (konfirmasi) tampil sebagai langkah 5
+    const langkahVisual = ambilDiToko && langkah === 6 ? 5 : langkah;
+    const ixVisual = langkahVisual - 1;
+
+    document.querySelectorAll("#stepDots i").forEach((dot, ix) => {
+      if (ix >= total) {
+        dot.hidden = true;
+      } else {
+        dot.hidden = false;
+        dot.classList.toggle("aktif", ix < ixVisual);
+        dot.classList.toggle("kini", ix === ixVisual);
+      }
+    });
+    document.getElementById("stepCap").textContent =
+      `Langkah ${langkahVisual} dari ${total}`;
+  }
+
   function tampilLangkah(n, gulir = true) {
+    if (cumaAmbil() && n === 5) n = 6;
     langkah = Math.max(1, Math.min(MAKS_LANGKAH, n));
     document.querySelectorAll("[data-langkah]").forEach((el) => {
       el.hidden = Number(el.dataset.langkah) !== langkah;
     });
 
-    // dots + caption indikator
-    document.querySelectorAll("#stepDots i").forEach((dot, ix) => {
-      dot.classList.toggle("aktif", ix < langkah - 1); // udah dilewatin
-      dot.classList.toggle("kini", ix === langkah - 1); // lagi di sini
-    });
-    document.getElementById("stepCap").textContent =
-      `Langkah ${langkah} dari ${MAKS_LANGKAH}`;
+    perbaruiIndikator();
 
     // bar bawah: ilang di langkah konfirmasi, tombol ← ilang di langkah 1
     document.getElementById("barKirim").hidden = langkah === MAKS_LANGKAH;
@@ -278,10 +307,10 @@ const Pesen = (function () {
 
   function lanjut() {
     if (!validLangkah(langkah)) return;
-    tampilLangkah(langkah + 1);
+    tampilLangkah(langkahBerikutnya(langkah));
   }
   function mundur() {
-    tampilLangkah(langkah - 1);
+    tampilLangkah(langkahSebelumnya(langkah));
   }
 
   // validasi isi SATU langkah; false = ada yang kurang
@@ -344,6 +373,7 @@ const Pesen = (function () {
       return true;
     }
     if (n === 5) {
+      if (cumaAmbil()) return true; // langkah 5 gak dipake kalo ambil di toko
       if (
         nilai("kapan") === "custom" &&
         !document.getElementById("inWaktu").value.trim()
@@ -404,11 +434,13 @@ const Pesen = (function () {
         "Bayar",
         bayar === "qris" ? "QRIS" : "Tunai",
       ]);
-    baris.push([
-      "fa-regular fa-calendar",
-      "Diantar kapan",
-      teksKapan(kapan, waktuTeks),
-    ]);
+    if (ambil === "cod") {
+      baris.push([
+        "fa-regular fa-calendar",
+        "Diantar kapan",
+        teksKapan(kapan, waktuTeks),
+      ]);
+    }
 
     document.getElementById("konfInfo").innerHTML = baris
       .map(
@@ -520,7 +552,9 @@ const Pesen = (function () {
 
     daftar.forEach((m) => patchKartu(m.id)); // stepper qty + chip level balik
     renderRingkas();
-    tampilLangkah(Math.min(Number(d.langkah) || 1, MAKS_LANGKAH), false);
+    let langkahAwal = Math.min(Number(d.langkah) || 1, MAKS_LANGKAH);
+    if (ambilKini === "ambil" && langkahAwal === 5) langkahAwal = 4;
+    tampilLangkah(langkahAwal, false);
 
     if (keranjang.length || d.nama) {
       showToast("Lanjut ya — pilihan tadi masih ke-save 😉", "info");
@@ -618,6 +652,7 @@ const Pesen = (function () {
             e.target.value !== "ambil";
           document.getElementById("catatanOngkir").hidden = !cod; // keterangan ongkir
           renderRingkas(); // total bar + ringkasan ikut +ongkir
+          perbaruiIndikator(); // sesuaikan total & posisi langkah (5 vs 6)
         }
         // isian jam kirim cuma muncul kalo pilih "Pilih waktu"
         if (e.target.name === "kapan") {
@@ -651,6 +686,7 @@ const Pesen = (function () {
     // (kirim tombolnya cuma ada di langkah konfirmasi, tapi jaga-jaga
     //  misal user ngelewatin lewat devtools dll)
     for (let n = 1; n < MAKS_LANGKAH; n++) {
+      if (cumaAmbil() && n === 5) continue; // langkah 5 dilewati kalo ambil di toko
       if (!validLangkah(n)) {
         tampilLangkah(n);
         return;
@@ -661,10 +697,10 @@ const Pesen = (function () {
     const wa = formatWa(normWa(document.getElementById("inWa").value)); // biar konsisten sama tampilan
     const ambil = nilai("ambil");
     const bayar = nilai("bayar");
-    const alamat = document.getElementById("inAlamat").value.trim();
-    const kapan = nilai("kapan") || "sekarang";
+    const alamat = ambil === "cod" ? document.getElementById("inAlamat").value.trim() : "";
+    const kapan = ambil === "ambil" ? "sekarang" : (nilai("kapan") || "sekarang");
     const waktuTeks =
-      kapan === "custom"
+      ambil !== "ambil" && kapan === "custom"
         ? document.getElementById("inWaktu").value.trim()
         : null;
 

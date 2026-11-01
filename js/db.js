@@ -140,6 +140,43 @@ const TmDb = (function () {
       return !!data;
     },
 
+    // ── manajemen sesi PIN (sessionStorage + session cookie) ──
+    // Berlaku selama browser buka (lintas tab/reload), hilang saat browser ditutup
+    getPinSession() {
+      const k = typeof TM_PIN_KEY !== "undefined" ? TM_PIN_KEY : "tm_pin";
+      try {
+        const s = sessionStorage.getItem(k);
+        if (s) return s;
+      } catch (e) {}
+      try {
+        const m = document.cookie.match(new RegExp("(?:^|; )" + k + "=([^;]*)"));
+        if (m && m[1]) {
+          const val = decodeURIComponent(m[1]);
+          try { sessionStorage.setItem(k, val); } catch (e) {}
+          return val;
+        }
+      } catch (e) {}
+      return "";
+    },
+
+    setPinSession(pin) {
+      if (!pin) return;
+      const k = typeof TM_PIN_KEY !== "undefined" ? TM_PIN_KEY : "tm_pin";
+      try { sessionStorage.setItem(k, pin); } catch (e) {}
+      try {
+        // Tanpa max-age/expires = session cookie (otomatis dibuang saat browser ditutup)
+        document.cookie = k + "=" + encodeURIComponent(pin) + "; path=/; SameSite=Lax";
+      } catch (e) {}
+    },
+
+    clearPinSession() {
+      const k = typeof TM_PIN_KEY !== "undefined" ? TM_PIN_KEY : "tm_pin";
+      try { sessionStorage.removeItem(k); } catch (e) {}
+      try {
+        document.cookie = k + "=; path=/; max-age=0; SameSite=Lax";
+      } catch (e) {}
+    },
+
     async ubahStatus(id, status, pin) {
       const { data, error } = await supa.rpc("ubah_status", {
         p_id: id, p_status: status, p_pin: String(pin || ""),

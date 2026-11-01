@@ -11,7 +11,7 @@ const Dapur = (function () {
   let tabAktif = "menunggu";
   let hariIniSaja = true;
   let waPenjual = "";
-  let pin = sessionStorage.getItem(TM_PIN_KEY) || "";
+  let pin = (typeof TmDb !== "undefined" && TmDb.getPinSession ? TmDb.getPinSession() : "") || sessionStorage.getItem(TM_PIN_KEY) || "";
 
   const rupiah = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
@@ -31,25 +31,47 @@ const Dapur = (function () {
   }
 
   // ── gerbang PIN ──
-  async function cobaMasuk() {
+  async function cobaMasuk(pinOtomatis) {
     const input = document.getElementById("inputPin");
     const btn = document.getElementById("btnMasuk");
-    btn.disabled = true;
+    const nilai = (typeof pinOtomatis === "string" ? pinOtomatis : (input ? input.value : "")).trim();
+    if (!nilai) {
+      if (!pinOtomatis && input) input.focus();
+      return;
+    }
+    if (btn) btn.disabled = true;
     try {
-      const ok = await TmDb.cekPin(input.value);
+      const ok = await TmDb.cekPin(nilai);
       if (!ok) {
+        if (pinOtomatis) {
+          if (TmDb.clearPinSession) TmDb.clearPinSession();
+          else sessionStorage.removeItem(TM_PIN_KEY);
+          pin = "";
+          document.getElementById("gate").hidden = false;
+          document.getElementById("isi").hidden = true;
+          if (input) {
+            input.value = "";
+            input.focus();
+          }
+          return;
+        }
         showToast("PIN salah. Coba lagi.", "error");
-        input.value = "";
-        input.focus();
+        if (input) {
+          input.value = "";
+          input.focus();
+        }
         return;
       }
-      pin = input.value;
-      sessionStorage.setItem(TM_PIN_KEY, pin);
+      pin = nilai;
+      if (TmDb.setPinSession) TmDb.setPinSession(pin);
+      else sessionStorage.setItem(TM_PIN_KEY, pin);
       bukaDapur();
     } catch (err) {
-      showToast(TmDb.pesanRamah(err), "error");
+      if (!pinOtomatis) {
+        showToast(TmDb.pesanRamah(err), "error");
+      }
     } finally {
-      btn.disabled = false;
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -228,7 +250,8 @@ const Dapur = (function () {
   }
 
   function keluar() {
-    sessionStorage.removeItem(TM_PIN_KEY);
+    if (TmDb.clearPinSession) TmDb.clearPinSession();
+    else sessionStorage.removeItem(TM_PIN_KEY);
     pin = "";
     document.getElementById("isi").hidden = true;
     document.getElementById("gate").hidden = false;
@@ -238,7 +261,7 @@ const Dapur = (function () {
 
   // ── init ──
   function mulai() {
-    document.getElementById("btnMasuk").addEventListener("click", cobaMasuk);
+    document.getElementById("btnMasuk").addEventListener("click", () => cobaMasuk());
     document.getElementById("inputPin").addEventListener("keydown", (e) => {
       if (e.key === "Enter") cobaMasuk();
     });
@@ -286,8 +309,8 @@ const Dapur = (function () {
     });
     document.getElementById("btnShareWa").addEventListener("click", shareWa);
 
-    // udah pernah masuk PIN di tab ini? langsung buka
-    if (pin) cobaMasuk();
+    // udah pernah masuk PIN di sesi browser ini? langsung buka
+    if (pin) cobaMasuk(pin);
   }
 
   document.addEventListener("DOMContentLoaded", mulai);

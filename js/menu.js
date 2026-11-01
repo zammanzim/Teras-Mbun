@@ -91,111 +91,12 @@ const Menu = (function () {
   }
 
   // ── daftar section di dropdown hamburger ──
-  // id = anchor di halaman ini; href = pindah halaman.
-  // akses = true (PIN pernah diverifikasi di tab ini) → item Admin + Dapur
-  // ikut muncul di bawah.
-  const NAV_SECTIONS = [
-    { id: "greeting", label: "Beranda", icon: "fa-house" },
-    { id: "daftar", label: "Lihat Menu", icon: "fa-utensils" },
-    { href: "pesen", label: "Pesan", icon: "fa-cart-shopping" },
-  ];
-  const NAV_ADMIN = [
-    { href: "dapur", label: "Dapur", icon: "fa-fire-burner" },
-    { href: "admin", label: "Admin", icon: "fa-gear" },
-  ];
-
-  // ── akses admin lewat URL: terasmbun.my.id/?password=XXXX ──
-  // Kalo password-nya bener (= PIN dapur/admin, dicek server via RPC
-  // cek_pin), simpen ke sessionStorage (TM_PIN_KEY). Efeknya:
-  //   1) hamburger di index dapet item Dapur + Admin
-  //   2) halaman dapur/admin langsung kebuka — gate PIN gak nongol
-  //      (itu emang cara lama: kalo TM_PIN_KEY udah ada, auto cobaMasuk)
-  // Sekali verifikasi di 1 tab, berlaku sampe tab ditutup.
-  async function cekAksesAdmin() {
-    if (sessionStorage.getItem(TM_PIN_KEY)) return true; // udah pernah di tab ini
-    const pw = new URLSearchParams(location.search).get("password");
-    if (!pw) return false;
-    try {
-      if (await TmDb.cekPin(pw)) {
-        sessionStorage.setItem(TM_PIN_KEY, pw);
-        // param dibuang dari address bar: PIN gak usah nongol di
-        // history / screenshot / "halaman terakhir"
-        history.replaceState(null, "", location.pathname);
-        return true;
-      }
-    } catch (e) {
-      /* offline / RPC error — anggap gak punya akses */
-    }
-    return false;
-  }
-
-  function pasangDropdown(aksesAdmin) {
-    const btn = document.getElementById("btnNavMenu");
-    const panel = document.getElementById("navPanel");
-    if (!btn || !panel) return;
-
-    // render link dari NAV_SECTIONS (+ Admin/Dapur kalo akses)
-    const nav = aksesAdmin ? NAV_SECTIONS.concat(NAV_ADMIN) : NAV_SECTIONS;
-    panel.innerHTML = nav.map(
-      (s) =>
-        `<a href="${esc(s.href || "#" + s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`,
-    ).join("");
-
-    const tutup = () => {
-      panel.hidden = true;
-      btn.setAttribute("aria-expanded", "false");
-    };
-
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const buka = panel.hidden;
-      panel.hidden = !buka;
-      btn.setAttribute("aria-expanded", String(buka));
-    });
-
-    // klik link → kalo anchor, smooth scroll; kalo halaman, biarin jalan
-    panel.addEventListener("click", (e) => {
-      const a = e.target.closest("a");
-      if (!a) return;
-      const href = a.getAttribute("href");
-      if (href && !href.startsWith("#")) {
-        tutup();
-        return;
-      } // pindah halaman
-      e.preventDefault();
-      if (href === "#greeting") {
-        // Beranda: scroll ke paling atas beneran (0px).
-        // scrollIntoView#greeting mentok di bawah header karena header ikut alur dokumen.
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        const el = document.querySelector(href);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      tutup();
-    });
-
-    // klik di luar / ESC → tutup
-    document.addEventListener("click", (e) => {
-      if (!panel.hidden && !e.target.closest("#navDropdown")) tutup();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") tutup();
-    });
-  }
+  // (pindah ke js/nav.js — header seragam di semua halaman)
 
   // ── init ──
   async function mulai() {
     renderTampil();
-
-    // cek akses admin (?password= / udah pernah verif di tab ini) dulu,
-    // baru render dropdown — item Dapur/Admin muncul kalo akses oke
-    let aksesAdmin = false;
-    try {
-      aksesAdmin = await cekAksesAdmin();
-    } catch (e) {
-      /* RPC mati — dropdown tetep jalan tanpa item admin */
-    }
-    pasangDropdown(aksesAdmin);
+    // (dropdown hamburger diurus js/nav.js — header seragam)
 
     // muat menu
     try {

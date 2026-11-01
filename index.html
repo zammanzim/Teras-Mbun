@@ -41,7 +41,7 @@
               <i class="fa-solid fa-bars"></i>
             </button>
             <nav class="dropdown-panel" id="navPanel" hidden>
-              <!-- link section di-render dari NAV_SECTIONS di js/menu.js -->
+              <!-- link section di-render dari js/nav.js -->
             </nav>
           </div>
         </div>
@@ -137,14 +137,9 @@
     <script src="js/notice.js"></script>
     <script src="js/show-popup.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/nav.js"></script>
     <script src="js/visitor.js"></script>
     <script src="js/menu.js"></script>
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () =>
-          navigator.serviceWorker.register("sw.js"),
-        );
-      }
-    </script>
+    <script src="js/pwa-refresh.js"></script>
   </body>
 </html>

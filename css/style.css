@@ -1870,10 +1870,11 @@ input[type="number"]::-webkit-inner-spin-button {
 .aku-baris-aksi .btn {
   flex: 1;
 }
-/* QRIS DIGABUNG di dalem kartu pesenan (pemisahnya garis putus-putus) */
+/* QRIS DIGABUNG di dalem kartu pesenan — sekarang nempel di bawah
+   blok Hubungi Penjual (pemisahnya garis putus-putus) */
 .aku-qris {
-  margin-top: 17px;
-  padding-top: 15px;
+  margin-top: 13px;
+  padding-top: 14px;
   border-top: 1px dashed rgba(42, 24, 16, 0.18);
 }
 .aku-qris .aku-judul {
