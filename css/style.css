@@ -39,6 +39,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* semua link: tanpa underline (bawaan browser bikin <a> ke-underline) */
+a {
+  text-decoration: none;
+}
+
 body {
   font-family: var(--font-body);
   background-color: #3a2416; /* fallback paling bawah (kalo foto gak ada) */
@@ -415,27 +420,46 @@ body::before {
   );
 }
 
-/* jarak antar item dalem grup */
-.tampil-blok + .tampil-blok {
-  margin-top: 44px;
-}
+/* jarak antar grup kategori (item dalem grup diatur grid, liat .menu-grup) */
 
-/* ===== Showcase: satu menu NEMUPEL satu layar — foto atas, teks bawah ===== */
+/* ===== Showcase: 2 kolom kaya halaman pesen — kartu ringkas, foto + teks ===== */
 .menu-tampil {
   display: flex;
   flex-direction: column;
-  gap: 44px;
-  max-width: 460px;
+  gap: 30px;
+  max-width: 720px;
   margin: 0 auto;
+}
+
+/* per grup: kartu nge-grid 2 kolom; judul kategori mepet full-width di atas */
+.menu-grup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.menu-grup .kat-judul {
+  grid-column: 1 / -1; /* judul kategori tetep 1 baris penuh */
+  margin: 4px 0 2px;
+}
+/* HP super sempit / zoom: 2 kolom mulai kekecilan — turun ke 1 kolom */
+@media (max-width: 360px) {
+  .menu-grup {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+@media (max-width: 420px) {
+  .menu-grup {
+    gap: 10px;
+  }
 }
 
 .tampil-blok {
   animation: rise 0.3s ease both;
   display: flex;
   flex-direction: column;
-  /* tinggi = satu layar (dikurangi header + padding) — foto + teks keliatan semua */
-  height: calc(100vh - 130px);
-  height: calc(100dvh - 130px); /* versi mobile yang akurat (dvh) */
+  /* tinggi ngikutin konten: foto rasio tetep + teks — BUKAN setengah layar */
+  height: auto;
   /* foto + panel teks SATU kartu: nge-clip jadi satu, bukan dua blok nempel */
   background: linear-gradient(
     135deg,
@@ -444,9 +468,10 @@ body::before {
     var(--amber) 160%
   ); /* latar foto-kosong */
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--r);
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  min-width: 0; /* kartu gak boleh minta lebar min-content (biar grid gak meledak) */
 }
 
 .tampil-info {
@@ -455,32 +480,33 @@ body::before {
   /* panel bawah: nempel langsung ke foto (radius & margin ilang — satu kartu) */
   background: rgba(24, 14, 8, 0.78);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 14px 16px;
+  padding: 10px 12px;
 }
 .baris-atas {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 .baris-atas .nama {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1.3rem;
-  line-height: 1.15;
+  font-size: clamp(0.9rem, 3.4vw, 1.05rem);
+  line-height: 1.2;
   color: var(--putih);
+  min-width: 0;
 }
 .baris-atas .harga {
   color: var(--amber);
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: clamp(0.78rem, 3vw, 0.92rem);
   white-space: nowrap;
 }
 .tampil-info .deskripsi {
   color: rgba(255, 250, 242, 0.78);
-  font-size: 0.92rem;
-  line-height: 1.5;
-  margin-top: 7px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-top: 5px;
 }
 
 .tampil-foto {
@@ -496,8 +522,8 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  min-height: 0; /* ngisi semua sisa ruang di blok (teks udah diambil duluan) */
+  flex: none;
+  aspect-ratio: 16 / 10; /* rasio tetep biar grid rapi meski foto beda */
 }
 .tampil-foto img {
   width: 100%;
@@ -506,7 +532,7 @@ body::before {
   display: block;
 }
 .tampil-foto .foto-emoji {
-  font-size: 3.8rem;
+  font-size: 2.6rem;
   line-height: 1;
   /* tanpa filter:drop-shadow + tanpa animasi infinite — biar GPU santai */
 }
@@ -1687,6 +1713,38 @@ input[type="number"]::-webkit-inner-spin-button {
   box-shadow: 0 4px 12px rgba(240, 169, 46, 0.35);
 }
 
+/* ── Aksi WA full-width di atas Rincian (+ keterangan di bawahnya) ──
+   QRIS: keterangannya nambah 1 baris "konfirmasi kalo udah bayar" */
+.aku-wa {
+  margin-top: 12px; /* jarak dari .aku-langkah */
+}
+.aku-wa .btn {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+}
+.aku-wa-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(47, 158, 99, 0.1);
+  border: 1px dashed rgba(47, 158, 99, 0.42);
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.aku-wa-note i {
+  color: var(--daun);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.aku-wa-note b {
+  color: #1e7a4a;
+}
+
 .aku-judul {
   font-family: var(--font-display);
   font-weight: 600;
@@ -1759,6 +1817,27 @@ input[type="number"]::-webkit-inner-spin-button {
   flex-direction: column;
   gap: 15px;
 }
+/* tombol buka riwayat lama — di paling bawah daftar, gaya dashed biar
+   keliatan sebagai "pintu", bukan aksi utama */
+.riwayat-toggle {
+  margin-top: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.42);
+  color: var(--putih);
+  font-weight: 700;
+  padding: 13px 18px;
+  border-radius: 14px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.riwayat-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-style: solid;
+}
+.riwayat-toggle i {
+  color: var(--amber);
+}
 /* aksi per kartu (Bagikan WA + Pesan lagi) */
 .aku-baris-aksi {
   display: flex;
@@ -1783,12 +1862,6 @@ input[type="number"]::-webkit-inner-spin-button {
   margin-bottom: 10px;
 }
 
-.aku-aksi {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-}
 @media (max-width: 420px) {
   .aku-kode {
     font-size: 1.45rem;
@@ -2359,6 +2432,144 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--muted);
   font-weight: 600;
   font-size: 0.88em;
+}
+
+/* ===== CTA bawah (index): ajakan pesan setelah semua menu discroll =====
+   Sengaja DIPISAH dari .greeting — greeting buat sambutan di atas,
+   ini "jaring" penutup di bawah: lebih ramai (3 langkah + 2 tombol) */
+.cta-bawah {
+  position: relative;
+  overflow: hidden;
+  margin-top: 52px;
+  padding: 34px 20px 30px;
+  text-align: center;
+  border-radius: 26px;
+  border: 1px solid var(--glass-line2);
+  background: linear-gradient(
+    160deg,
+    rgba(28, 17, 10, 0.88) 0%,
+    rgba(74, 47, 30, 0.82) 55%,
+    rgba(122, 82, 56, 0.88) 100%
+  );
+  box-shadow: var(--shadow);
+  animation: rise 0.4s ease both;
+}
+/* watermark emoji gede di pojok — dekoratif, gak ganggu teks */
+.cta-emojis {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  font-size: 4.4rem;
+  opacity: 0.07;
+  pointer-events: none;
+  user-select: none;
+}
+.cta-kicker {
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 7px;
+}
+.cta-judul {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.55rem, 6.5vw, 2.1rem);
+  line-height: 1.15;
+  color: var(--putih);
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+.cta-judul em {
+  color: var(--amber);
+  font-style: italic;
+}
+.cta-sub {
+  color: rgba(255, 250, 242, 0.78);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 400px;
+  margin: 11px auto 22px;
+}
+/* 3 langkah: garis penghubung tipis antar langkah (biar kaya "alur") */
+.cta-langkah {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin: 0 0 24px;
+  padding: 0;
+  counter-reset: langkah;
+}
+.cta-langkah li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 13px 7px 11px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-line2);
+  color: var(--putih);
+  font-size: 0.83rem;
+}
+.cta-langkah .langkah-no {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.86rem;
+  background: linear-gradient(135deg, var(--amber), var(--amber2));
+  color: var(--espresso);
+  box-shadow: 0 4px 12px rgba(240, 169, 46, 0.4);
+  margin-bottom: 3px;
+}
+.cta-langkah small {
+  color: rgba(255, 250, 242, 0.62);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+/* tombol: keduanya sejajar di desktop, numpuk rapi di HP */
+.cta-aksi {
+  display: flex;
+  gap: 11px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cta-bawah .btn-kaca {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--putih);
+  border: 1px solid var(--glass-line2);
+}
+.cta-bawah .btn-kaca:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.cta-catatan {
+  margin-top: 18px;
+  font-size: 0.8rem;
+  color: rgba(255, 250, 242, 0.6);
+  letter-spacing: 0.3px;
+}
+.cta-catatan i {
+  color: var(--amber);
+  margin-right: 3px;
+}
+/* HP: 3 kolom kekecilan → biar langkah tetep kebaca, font dipadetin */
+@media (max-width: 420px) {
+  .cta-langkah li {
+    padding: 11px 5px 9px;
+    font-size: 0.76rem;
+  }
+  .cta-langkah small {
+    font-size: 0.65rem;
+  }
+  .cta-bawah .btn-besar {
+    width: 100%;
+  }
 }
 
 /* ===== Responsive kecil ===== */

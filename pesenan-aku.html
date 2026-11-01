@@ -27,7 +27,7 @@
       <div class="topbar-inner">
         <a class="brand" href="index">
           <span class="logo"><i class="fa-solid fa-bowl-food"></i></span>
-          <span class="nama">Teras Mbun<small>PESANAN AKU</small></span>
+          <span class="nama">Teras Mbun</span>
         </a>
         <div class="top-right">
           <a class="btn btn-kecil btn-kaca" href="pesen"
@@ -57,18 +57,22 @@
       </section>
 
       <!-- daftar riwayat: tiap pesenan = 1 kartu (rincian + info + QRIS
-         di dalem kartu yang sama, gak dipisah) -->
+           di dalem kartu yang sama, gak dipisah).
+           Default: cuma pesenan BARU (paling atas) yang tampil; sisanya
+           disembunyiin — dibuka lewat tombol riwayat di bawah -->
       <div class="daftar-aku" id="daftarAku"></div>
 
-      <!-- aksi bawah -->
-      <div class="aku-aksi" id="akuAksi" hidden>
-        <a class="btn btn-hijau" href="pesen"
-          ><i class="fa-solid fa-plus"></i> Pesan lagi</a
-        >
-        <button class="btn btn-kaca" id="btnBersih">
-          <i class="fa-solid fa-broom"></i> Bersihkan
-        </button>
-      </div>
+      <!-- buka/tutup riwayat lama (cuma muncul kalo ada > 1 pesenan) -->
+      <button
+        class="btn btn-kaca btn-lebar riwayat-toggle"
+        id="btnRiwayat"
+        aria-expanded="false"
+        hidden
+      >
+        <i class="fa-solid fa-chevron-down"></i> Lihat semua riwayat
+        pesanan kamu
+      </button>
+
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

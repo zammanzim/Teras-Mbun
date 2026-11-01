@@ -14,6 +14,7 @@ const PesenanAku = (function () {
   const MAKS = 20; // riwayat disimpen paling banyak 20
 
   let daftarPsn = []; // riwayat, paling baru di atas
+  let riwayatBuka = false; // false = riwayat lama disembunyiin (baru tampil 1)
   let waPenjual = "";
   let fotoQris = "";
 
@@ -70,14 +71,6 @@ const PesenanAku = (function () {
       /* storage penuh / private mode — tampilan tetep jalan */
     }
   }
-  function hapusRiwayat() {
-    try {
-      localStorage.removeItem(KEY);
-      localStorage.removeItem(KEY_LAMA); // snapshot lama ikut dibuang
-    } catch (e) {
-      /* abaikan */
-    }
-  }
 
   // teks jadwal kirim yang enak dibaca
   function teksJadwal(p) {
@@ -103,6 +96,7 @@ const PesenanAku = (function () {
     const s = STATUS[p.status] || STATUS.menunggu;
     const urut = ["menunggu", "dibuat", "siap"];
     const kini = urut.indexOf(p.status);
+    const qris = p.metode_bayar === "qris"; // dipake blok WA + blok QRIS
 
     // langkah progress Menunggu → Dibuat → Siap
     const langkah = [
@@ -169,18 +163,12 @@ const PesenanAku = (function () {
         : "");
 
     // QRIS: di dalem kartu yang sama (gak kartu terpisah lagi)
-    const qris = p.metode_bayar === "qris";
     const qrisHtml = `
       <div class="qris-bayar aku-qris" data-kode="${esc(p.kode)}" ${qris ? "" : "hidden"}>
         <h3 class="aku-judul"><i class="fa-solid fa-qrcode"></i> Bayar QRIS</h3>
         <p class="qris-total">Total bayar: ${rupiah(p.total)}</p>
         <div class="qris-foto" data-foto="${esc(p.kode)}"></div>
         <p class="catatan-qris" data-catatan="${esc(p.kode)}"></p>
-        <div class="aksi-media">
-          <button class="btn btn-kecil btn-foto" data-bukti="${esc(p.kode)}" ${qris && waPenjual ? "" : "hidden"}>
-            <i class="fa-brands fa-whatsapp"></i> Kabari kalo udah bayar
-          </button>
-        </div>
       </div>`;
 
     return `<section class="kartu-form aku-detail" data-kode="${esc(p.kode)}" style="animation-delay:${ix * 40}ms">
@@ -196,6 +184,23 @@ const PesenanAku = (function () {
 
       <ol class="aku-langkah">${langkah}</ol>
 
+      <!-- aksi utama: WA full-width + keterangan di bawahnya.
+           Tombol WA lama di .aku-baris-aksi ikut dipindah ke sini
+           (biar gak dobel) -->
+      <div class="aku-wa">
+        <button class="btn btn-hijau btn-lebar" data-wa="${esc(p.kode)}">
+          <i class="fa-brands fa-whatsapp"></i> Hubungi Penjual
+        </button>
+        <p class="aku-wa-note">
+          <i class="fa-solid fa-comment-dots"></i>
+          <span>
+            <b>Hubungi penjual</b> — langsung hubungi penjual biar pesanan
+            segera diproses.
+            ${qris ? "<br>Konfirmasi juga kalo kamu udah bayar lewat QRIS." : ""}
+          </span>
+        </p>
+      </div>
+
       <h3 class="aku-judul"><i class="fa-solid fa-receipt"></i> Rincian</h3>
       <ul class="daftar-item">${daftarItem || "<li>Belum ada rincian.</li>"}</ul>
       <p class="rincian-total"><span>Total: </span><b>${rupiah(p.total)}</b></p>
@@ -206,9 +211,6 @@ const PesenanAku = (function () {
       ${qrisHtml}
 
       <div class="aku-baris-aksi">
-        <button class="btn btn-kecil btn-hijau" data-wa="${esc(p.kode)}">
-          <i class="fa-brands fa-whatsapp"></i> Hubungi Penjual
-        </button>
         <a class="btn btn-kecil btn-kaca" href="pesen"><i class="fa-solid fa-plus"></i> Pesan lagi</a>
       </div>
     </section>`;
@@ -219,9 +221,28 @@ const PesenanAku = (function () {
     document.getElementById("akuMuat").hidden = true;
     const kosong = daftarPsn.length === 0;
     document.getElementById("akuKosong").hidden = !kosong;
-    document.getElementById("akuAksi").hidden = kosong;
     box.innerHTML = daftarPsn.map(kartuHtml).join("");
+    terapkanRiwayat(); // pesenan baru tampil; lama nunggu dibuka lewat tombol
     isiFotoQris(); // foto QRIS dari setting (kalo udah ke-load)
+  }
+
+  // ── sembunyiin/bukain riwayat lama ──
+  // Default: cuma pesenan paling baru (ix 0) yang keliatan — sisanya
+  // numpuk di bawah tombol "Lihat semua riwayat". Kalo user buka,
+  // semua kartu tampil & tombolnya jadi "Tutup riwayat".
+  function terapkanRiwayat() {
+    const kartu = document.querySelectorAll("#daftarAku .aku-detail");
+    const btn = document.getElementById("btnRiwayat");
+    const adaLama = kartu.length > 1;
+    if (!adaLama) riwayatBuka = false; // 0–1 pesenan: gak ada yg disembunyiin
+    btn.hidden = !adaLama;
+    kartu.forEach((k, ix) => {
+      k.hidden = ix > 0 && !riwayatBuka;
+    });
+    btn.setAttribute("aria-expanded", String(riwayatBuka));
+    btn.innerHTML = riwayatBuka
+      ? '<i class="fa-solid fa-chevron-up"></i> Tutup riwayat pesanan'
+      : `<i class="fa-solid fa-chevron-down"></i> Lihat semua riwayat pesanan kamu (${kartu.length})`;
   }
 
   // patch status SATU kartu (pill + langkah) — gak render ulang detail
@@ -256,8 +277,6 @@ const PesenanAku = (function () {
         cat.textContent =
           "QRIS-nya lagi disiapin — kabari penjual langsung ya.";
       }
-      const btn = q.querySelector("[data-bukti]");
-      btn.hidden = !waPenjual;
     });
   }
 
@@ -306,7 +325,6 @@ const PesenanAku = (function () {
   function pasangAksi() {
     document.getElementById("daftarAku").addEventListener("click", (e) => {
       const wa = e.target.closest("[data-wa]");
-      const bukti = e.target.closest("[data-bukti]");
       if (wa) {
         const p = cari(wa.dataset.wa);
         if (!p) return;
@@ -315,35 +333,21 @@ const PesenanAku = (function () {
           return;
         }
         window.open(`https://wa.me/${waPenjual}?text=${teksWa(p)}`, "_blank");
-      } else if (bukti) {
-        const p = cari(bukti.dataset.bukti);
-        if (!p) return;
-        const teks = `Halo, udah bayar QRIS pesenan #${p.kode} total ${rupiah(p.total)} ya. Ini buktinya 🙏`;
-        window.open(
-          `https://wa.me/${waPenjual}?text=${encodeURIComponent(teks)}`,
-          "_blank",
-        );
       }
     });
 
-    // bersihkan riwayat (2x klik biar gak keapus gara-gara salah pencet)
-    let konfirmasi = false;
-    document.getElementById("btnBersih").addEventListener("click", (e) => {
-      if (!konfirmasi) {
-        konfirmasi = true;
-        e.currentTarget.innerHTML =
-          '<i class="fa-solid fa-triangle-exclamation"></i> Yakin? Klik lagi';
-        setTimeout(() => {
-          konfirmasi = false;
-          e.currentTarget.innerHTML =
-            '<i class="fa-solid fa-broom"></i> Bersihkan';
-        }, 4000);
-        return;
+    // buka/tutup riwayat lama (semua kecuali pesenan paling baru)
+    const btnRiwayat = document.getElementById("btnRiwayat");
+    btnRiwayat.addEventListener("click", () => {
+      riwayatBuka = !riwayatBuka;
+      terapkanRiwayat();
+      // pas dibuka: scroll ke kartu riwayat pertama biar langsung keliatan
+      if (riwayatBuka) {
+        const semua = document.querySelectorAll("#daftarAku .aku-detail");
+        const kartuLama = semua[1]; // ix 0 = pesenan baru, ix 1 = paling baru di antara lama
+        if (kartuLama)
+          kartuLama.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      hapusRiwayat();
-      daftarPsn = [];
-      render();
-      showToast("Riwayat dibersihkan.", "info");
     });
   }
 
@@ -394,9 +398,6 @@ const PesenanAku = (function () {
       fotoQris = info.qris || "";
       TmDb.terapkanBg(info.bg || "");
       isiFotoQris();
-      document.querySelectorAll("[data-bukti]").forEach((b) => {
-        b.hidden = !waPenjual;
-      });
     } catch (e) {
       /* QRIS/WA jadi teks fallback */
     }
