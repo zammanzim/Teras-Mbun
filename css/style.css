@@ -1290,6 +1290,11 @@ input[type="number"]::-webkit-inner-spin-button {
   font-size: 0.84rem;
   margin: 4px 0 12px;
 }
+/* teks "kosong" di dalem kartu terang — aslinya warna terang (buat latar gelap) */
+.media-kartu .kosong {
+  color: var(--muted);
+  padding: 16px 0 4px;
+}
 .media-preview {
   border-radius: 14px;
   overflow: hidden;

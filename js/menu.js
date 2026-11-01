@@ -90,21 +90,53 @@ const Menu = (function () {
     return peta[String(kat || "").toLowerCase()] || "🍽️";
   }
 
-  // ── daftar section di dropdown titik tiga ──
+  // ── daftar section di dropdown hamburger ──
   // id = anchor di halaman ini; href = pindah halaman.
+  // akses = true (PIN pernah diverifikasi di tab ini) → item Admin + Dapur
+  // ikut muncul di bawah.
   const NAV_SECTIONS = [
     { id: "greeting", label: "Beranda", icon: "fa-house" },
     { id: "daftar", label: "Lihat Menu", icon: "fa-utensils" },
     { href: "pesen", label: "Pesan", icon: "fa-cart-shopping" },
   ];
+  const NAV_ADMIN = [
+    { href: "dapur", label: "Dapur", icon: "fa-fire-burner" },
+    { href: "admin", label: "Admin", icon: "fa-gear" },
+  ];
 
-  function pasangDropdown() {
+  // ── akses admin lewat URL: terasmbun.my.id/?password=XXXX ──
+  // Kalo password-nya bener (= PIN dapur/admin, dicek server via RPC
+  // cek_pin), simpen ke sessionStorage (TM_PIN_KEY). Efeknya:
+  //   1) hamburger di index dapet item Dapur + Admin
+  //   2) halaman dapur/admin langsung kebuka — gate PIN gak nongol
+  //      (itu emang cara lama: kalo TM_PIN_KEY udah ada, auto cobaMasuk)
+  // Sekali verifikasi di 1 tab, berlaku sampe tab ditutup.
+  async function cekAksesAdmin() {
+    if (sessionStorage.getItem(TM_PIN_KEY)) return true; // udah pernah di tab ini
+    const pw = new URLSearchParams(location.search).get("password");
+    if (!pw) return false;
+    try {
+      if (await TmDb.cekPin(pw)) {
+        sessionStorage.setItem(TM_PIN_KEY, pw);
+        // param dibuang dari address bar: PIN gak usah nongol di
+        // history / screenshot / "halaman terakhir"
+        history.replaceState(null, "", location.pathname);
+        return true;
+      }
+    } catch (e) {
+      /* offline / RPC error — anggap gak punya akses */
+    }
+    return false;
+  }
+
+  function pasangDropdown(aksesAdmin) {
     const btn = document.getElementById("btnNavMenu");
     const panel = document.getElementById("navPanel");
     if (!btn || !panel) return;
 
-    // render link dari NAV_SECTIONS
-    panel.innerHTML = NAV_SECTIONS.map(
+    // render link dari NAV_SECTIONS (+ Admin/Dapur kalo akses)
+    const nav = aksesAdmin ? NAV_SECTIONS.concat(NAV_ADMIN) : NAV_SECTIONS;
+    panel.innerHTML = nav.map(
       (s) =>
         `<a href="${esc(s.href || "#" + s.id)}"><i class="fa-solid ${esc(s.icon)}"></i> ${esc(s.label)}</a>`,
     ).join("");
@@ -154,7 +186,16 @@ const Menu = (function () {
   // ── init ──
   async function mulai() {
     renderTampil();
-    pasangDropdown();
+
+    // cek akses admin (?password= / udah pernah verif di tab ini) dulu,
+    // baru render dropdown — item Dapur/Admin muncul kalo akses oke
+    let aksesAdmin = false;
+    try {
+      aksesAdmin = await cekAksesAdmin();
+    } catch (e) {
+      /* RPC mati — dropdown tetep jalan tanpa item admin */
+    }
+    pasangDropdown(aksesAdmin);
 
     // muat menu
     try {

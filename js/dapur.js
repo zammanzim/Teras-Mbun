@@ -63,6 +63,7 @@ const Dapur = (function () {
       TmDb.terapkanBg(info.bg || ""); // foto latar dari setting (kosong = gradient)
     } catch (e) { /* tombol WA tetap jalan tanpa nomor (diblokir) */ }
     await muat();
+    muatPengunjung(); // pengunjung (jalan paralel, gak nahan list pesenan)
     TmDb.subscribe(() => muat(true)); // realtime: list ke-update sendiri
   }
 
@@ -75,6 +76,50 @@ const Dapur = (function () {
       if (!diam) showToast(TmDb.pesanRamah(err), "error");
       else Notice.show("live", "Gagal muat ulang", { icon: "fa-solid fa-triangle-exclamation", type: "red" });
     }
+  }
+
+  // ── muat + render pengunjung (visitor per device) ──
+  async function muatPengunjung() {
+    const box = document.getElementById("daftarPengunjung");
+    try {
+      const rows = await TmDb.daftarKunjungan(pin);
+      if (!rows.length) {
+        box.innerHTML = '<p class="kosong">Belum ada kunjungan kesimpen.</p>';
+        return;
+      }
+      box.innerHTML = rows
+        .map((v, ix) => {
+          const singkat = String(v.device_id || "").slice(0, 8);
+          return `
+        <div class="baris-foto" data-device="${esc(v.device_id)}" title="Klik buat salin device ID" style="animation-delay:${ix * 25}ms">
+          <div class="thumb-foto"><i class="fa-solid fa-mobile-screen-button emoji-foto"></i></div>
+          <div class="info-foto">
+            <b>Device ${esc(singkat)}…</b>
+            <small>${esc(v.perangkat || "Perangkat gak kebaca")} · ${esc(teksKunjungan(v.kunjungan_terakhir))}</small>
+          </div>
+          <div class="aksi-foto">
+            <span class="tag-info"><i class="fa-solid fa-rotate-left"></i> ${esc(v.jumlah || 1)}x</span>
+          </div>
+        </div>`;
+        })
+        .join("");
+    } catch (e) {
+      box.innerHTML = '<p class="kosong">Gagal muat pengunjung.</p>';
+    }
+  }
+
+  // "terakhir kunjungan" versi singkat
+  function teksKunjungan(iso) {
+    if (!iso) return "—";
+    return (
+      "Terakhir " +
+      new Date(iso).toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
   }
 
   function render() {
@@ -213,7 +258,23 @@ const Dapur = (function () {
       else if (siap) ubah(siap.dataset.siap, "siap", siap);
     });
 
-    document.getElementById("btnSegarkan").addEventListener("click", () => muat());
+    document.getElementById("btnSegarkan").addEventListener("click", () => {
+      muat();
+      muatPengunjung();
+    });
+    // klik baris pengunjung → salin device ID-nya
+    document.getElementById("daftarPengunjung").addEventListener("click", (e) => {
+      const baris = e.target.closest("[data-device]");
+      if (!baris || !baris.dataset.device) return;
+      const teks = baris.dataset.device;
+      const salin = navigator.clipboard
+        ? navigator.clipboard.writeText(teks)
+        : Promise.reject();
+      salin.then(
+        () => showToast("Device ID disalin.", "info"),
+        () => showToast("Gagal nyalin device ID.", "error"),
+      );
+    });
     document.getElementById("btnKeluar").addEventListener("click", () => {
       showPopup("Keluar dari mode dapur?", "confirm").then((y) => { if (y) keluar(); });
     });

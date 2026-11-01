@@ -112,6 +112,20 @@
             <i class="fa-solid fa-spinner fa-spin"></i> Muat pesenan…
           </p>
         </div>
+
+        <!-- pengunjung web (visitor per device) — muat abis masuk PIN -->
+        <section class="media-kartu" id="kartuPengunjung" style="margin-top: 20px">
+          <h2><i class="fa-solid fa-users"></i> Pengunjung</h2>
+          <p class="petunjuk">
+            Device yang pernah masuk — ditandai per device ID. Klik barisnya
+            buat salin ID-nya.
+          </p>
+          <div id="daftarPengunjung">
+            <p class="kosong">
+              <i class="fa-solid fa-spinner fa-spin"></i> Muat pengunjung…
+            </p>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -122,6 +136,7 @@
     <script src="js/notice.js"></script>
     <script src="js/show-popup.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/visitor.js"></script>
     <script src="js/dapur.js"></script>
     <script>
       if ("serviceWorker" in navigator) {

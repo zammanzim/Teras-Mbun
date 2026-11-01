@@ -101,6 +101,16 @@ const TmDb = (function () {
       return data || { wa_penjual: "" };
     },
 
+    // Daftar pengunjung (visitor, per device) — wajib PIN.
+    // Balikin [] kalo PIN salah (dicek server-side, lihat db/013).
+    async daftarKunjungan(pin) {
+      const { data, error } = await supa.rpc("daftar_kunjungan", {
+        p_pin: String(pin || ""),
+      });
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    },
+
     // ── nulis (RPC, wajib validasi server-side) ──
     // items: [{id, qty, level}] — level 0..5 per item (minuman dipaksa 0
     // server); total + level_pedas (tertinggi) dihitung ulang oleh Postgres
